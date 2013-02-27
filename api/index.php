@@ -414,7 +414,6 @@ else if (isset($_POST['key']) && isset($_POST['package']))
         while ($row = $stmt->fetch()) {
             $region = $row['id'];
         }
-        print_r($stmt->rowCount());
         
         if ($stmt->rowCount() > 0) 
         {
@@ -428,11 +427,155 @@ else if (isset($_POST['key']) && isset($_POST['package']))
             die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
         }
     }
-
+    
+    $package = $_POST['package'];
+    
     { // SAVE STUFF
         $pingback_object = null;
         $pingback_type = null;
         
+        foreach ($package as $p) {
+            foreach($p as $v) {
+                print_r($v);
+                
+                if ($v[2].plext.markup[0][1].plain == "Your ") 
+                {
+                /*  if (json[2].plext.markup[0][1].plain == "Your ") {
+                      console.log("ignoring log for a 'Your' entry."); */
+                    // ignore this entry... who cares about my person stuff? nobody!
+                } 
+                elseif ($v[2].plext.markup[1][1].plain == " deployed an ") 
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " deployed an ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var res = json[2].plext.markup[2][1].plain;
+                      var port = json[2].plext.markup[4][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=deploy";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&res=" + res;
+                      writhem_temp = writhem_temp + "&portal=" + port;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp); */
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " destroyed an ")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed an ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var res = json[2].plext.markup[2][1].plain;
+                      var port = json[2].plext.markup[4][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=destroy";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&res=" + res;
+                      writhem_temp = writhem_temp + "&portal=" + port;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " destroyed the Link ")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed the Link ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=break";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&portal1=" + json[2].plext.markup[2][1].guid;
+                      writhem_temp = writhem_temp + "&portal2=" + json[2].plext.markup[4][1].guid;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " linked ")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " linked ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=linked";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&portal1=" + json[2].plext.markup[2][1].guid;
+                      writhem_temp = writhem_temp + "&portal2=" + json[2].plext.markup[4][1].guid;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " captured ")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " captured ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=captured";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[2][1].guid;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " destroyed a Control Field @")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed a Control Field @") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=liberate";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[2][1].guid;
+                      writhem_temp = writhem_temp + "&mus=" + json[2].plext.markup[4][1].plain;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " created a Control Field @")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " created a Control Field @") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=control";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + pguid;
+                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[2][1].guid;
+                      writhem_temp = writhem_temp + "&mus=" + json[2].plext.markup[4][1].plain;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[0][1].plain == "The Link ")
+                {
+                /*  } else if (json[2].plext.markup[0][1].plain == "The Link ") {
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=decayed";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&portal1=" + json[2].plext.markup[2][1].guid;
+                      writhem_temp = writhem_temp + "&portal2=" + json[2].plext.markup[4][1].guid;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                elseif ($v[2].plext.markup[1][1].plain == " destroyed a ")
+                {
+                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed a ") { //portal mod - destroy
+                      pguid = json[2].plext.markup[0][1].guid;
+                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=pmoddestroy";
+                      writhem_temp = writhem_temp + "&logid=" + json[0];
+                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
+                      writhem_temp = writhem_temp + "&user=" + json[2].plext.markup[0][1].guid;
+                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[4][1].guid;
+                      writhem_temp = writhem_temp + "&mod=" + json[2].plext.markup[2][1].plain;
+                      //console.log("hitting writhem api with : "+writhem_temp);
+                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                }
+                else 
+                { // this method is here just to catch new features as they are added to ingress/intel
+                    $message = "looks like a new and unsupported method has been implemented into the intel website. Here are the details:\n\n".$_GET['object']."\n\n";
+                    ob_start();
+                    print_r(json_decode(urldecode($_GET['object'])));
+                    $message .= ob_get_clean();
+                    mail($cfg['site']['contact'], $cfg['site']['title'], $message);
+
+                    header(':', true, 501);
+                    printf("<div id=\"fail\">\n  <error details=\"unsupported intel ingress object for the save method\" />\n</div>\n");
+                }
+            }
+        }
         /*if ($_GET['table'] == 'email' && isset($_GET['object'])) 
         { // this method is here just to catch new features as they are added to ingress/intel
             $message = "looks like a new and unsupported method has been implemented into the intel website. Here are the details:\n\n".$_GET['object']."\n\n";
@@ -1030,9 +1173,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
 }
 else
 {  // BAD REQUEST
-    echo "post data";
-    var_dump($_POST);
-    //header(':', true, 400);
+    header(':', true, 400);
     echo "bad api request! help <a href=\"../help/\">here</a>\n";
 }
 
