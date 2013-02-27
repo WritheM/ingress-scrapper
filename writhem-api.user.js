@@ -45,7 +45,7 @@ function wrapper() {
     }
     
     window.plugin.writhemAPI.setupOverloads = function() {
-        window.MAX_IDLE_TIME = 0; // never top updating the map.
+        window.MAX_IDLE_TIME = 0; // never stop updating the map.
         window.isIdle = function() {
             if (MAX_IDLE_TIME == 0) return false;
             return window.idleTime >= MAX_IDLE_TIME;

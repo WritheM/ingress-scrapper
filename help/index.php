@@ -112,16 +112,10 @@
       <td class="td">The database table you want to hit. see <a href="#available">Available Requests</a></td>
       <td class="td">Yes</td>
     </tr>
-    <tr> 
-      <td class="td">method</td>
-      <td class="td">The Action you want to execute. valid options are: query 
-        (default), save</td>
-      <td class="td">No</td>
-    </tr>
   </table>
 
   <p>You will have to send a simple HTTP GET Request to the given URL with your 
-    Key, the method you'd like to perform and the table Parameter. As Result you 
+    Key, and the table Parameter. As Result you 
     will receive a HTTP Response with variable HTTP-Status:</p>
 
 <table cellpadding="0" cellspacing="1" border="0" style="width:100%" class="tableborder">

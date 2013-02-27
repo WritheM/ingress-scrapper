@@ -1,5 +1,5 @@
 <?php
-header('Access-Control-Allow-Origin: http://www.ingress.com');
+header('Access-Control-Allow-Origin: https://www.ingress.com');
 header('Connection', 'keep-alive');
 if (isset($_GET['debug']))
 {
@@ -14,665 +14,40 @@ else
 
 require '../config/config.php';
 
-$method = (isset($_GET['method']) ? $_GET['method'] : 'query');   
 $region = (isset($_GET['region']) ? $_GET['region'] : 1);
+try {
+    $conn = "mysql:host={$cfg['db']['host']};dbname={$cfg['db']['dbase']}";
+    $db = new PDO($conn, $cfg['db']['user'], $cfg['db']['pass']);
+} catch (PDOException $e) {
+    header(':', true, 503);
+    printf("<div id=\"fail_connect\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+    exit();
+}
     
-if (isset($_GET['key']) && isset($_GET['table']) && isset($method)) 
+if (isset($_GET['key']) && isset($_GET['table'])) 
 {
-    { //#REGION initalize the db connection
-        try {
-            $db = new PDO("mysql:host={$cfg['db']['host']};dbname={$cfg['db']['dbase']}", $cfg['db']['user'], $cfg['db']['pass']);
-        } catch (PDOException $e) {
-            header(':', true, 503);
-            printf("<div id=\"fail_connect\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-            exit();
-        }
-          
-        if ($method == 'query') 
-        { // query has to be hit with an api key, verify its legit... 
-        
-            $stmt = $db->prepare("UPDATE `api` SET `hits` = `hits`+1 WHERE `api`.`key` = :key;");
-            $stmt->bindValue(':key',$_GET['key']);
-                
-            // foreach($db->query('SELECT * from FOO') as $row) {
-                // print_r($row);
-            // }
-            /* Update doesn't return a resultset */
-            if ($stmt->execute() && $stmt->rowCount() > 0) 
-            {
-                //header(':', true, 200);
-                if (isset($_GET['debug']))
-                    echo "  42:key accepted\n";
-            } 
-            else
-            {
-                header(':', true, 403);
-                die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
-            }
-        }
-        else 
-        { // save has to be hit by a scrapper, verify its legit... 
-            $stmt = $db->prepare("SELECT id, name FROM regions WHERE scrapper = :key;");
-            $stmt->bindParam(':key',$_GET['key']);
+    { // we were hit for info with a key, verify its legit... 
 
-            $stmt->execute();
-            while ($row = $stmt->fetch()) {
-                $region = $row['id'];
-            }
+        $stmt = $db->prepare("UPDATE `api` SET `hits` = `hits`+1 WHERE `api`.`key` = :key;");
+        $stmt->bindValue(':key',$_GET['key']);
             
-            if ($stmt->rowCount() > 0) 
-            {
-                header(':', true, 200);
-                if (isset($_GET['debug']))
-                    echo "  67:key accepted\n";
-            } 
-            else
-            {
-                header(':', true, 403);
-                die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
-            }
-        }
-    } //#REGION
-    
-    // --------------------
-    if ($method == 'save') 
-    { // SAVE STUFF
-        $pingback_object = null;
-        $pingback_type = null;
+        // foreach($db->query('SELECT * from FOO') as $row) {
+            // print_r($row);
+        // }
         
-        if ($_GET['table'] == 'email' && isset($_GET['object'])) 
-        { // this method is here just to catch new features as they are added to ingress/intel
-            $message = "looks like a new and unsupported method has been implemented into the intel website. Here are the details:\n\n".$_GET['object']."\n\n";
-            ob_start();
-            print_r(json_decode(urldecode($_GET['object'])));
-            $message .= ob_get_clean();
-            mail("michael@writhem.com", 'Calgary Ingress API Alerter', $message);
-
-            header(':', true, 501);
-            printf("<div id=\"fail\">\n  <error details=\"unsupported intel ingress object for the save method\" />\n</div>\n");
-        }
-        elseif ($_GET['table'] == 'portal') 
+        if ($stmt->execute() && $stmt->rowCount() > 0) 
         {
-            { // build the query
-                $parms = array();
-                $query = "INSERT INTO `ingress`.`portals` (`guid`, `address`, `latE6`, `lngE6`, `name`, `team`, `region`) VALUES (:guid, :address, :latE6, :lngE6, :name, :team, :region)
-    ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
-                $parms[] = array(':guid',$_GET['guid']);
-                $parms[] = array(':address',$_GET['address']);
-                $parms[] = array(':latE6',$_GET['latE6']);
-                $parms[] = array(':lngE6',$_GET['lngE6']);
-                $parms[] = array(':name',$_GET['name']);
-                $parms[] = array(':team',$_GET['team']);
-                $parms[] = array(':region',(int)$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
+            //header(':', true, 200);
+            if (isset($_GET['debug']))
+                echo "  42:key accepted\n";
         } 
-        elseif ($_GET['table'] == 'player') 
-        {
-            { // build the query
-                $parms = array();
-                $query = "INSERT INTO `ingress`.`players` (`guid`, `name`, `team`, `region`) VALUES (:guid, :name, :team, :region)
-    ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
-                $parms[] = array(':guid',$_GET['guid']);
-                $parms[] = array(':name',$_GET['name']);
-                $parms[] = array(':team',$_GET['team']);
-                $parms[] = array(':region',(int)$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        } 
-        elseif ($_GET['table'] == 'deploy' || $_GET['table'] == 'destroy') 
-        {
-            { // build the query
-                $parms = array();
-                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `res`, `region`) VALUES (:logid, :datetime, :user, :portal, :res, :region)
-                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `res`=:res, `region=:region;",
-                $_GET['table']);
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':user',$_GET['user']);
-                $parms[] = array(':portal',$_GET['portal']);
-                $parms[] = array(':res',$_GET['res']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $portal = getPortalObject($db, $_GET['portal']);
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'portal'=>$portal,
-                    'res'=>$_GET['res'],
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        } 
-        elseif ($_GET['table'] == 'break' || $_GET['table'] == 'linked') 
-        {
-            { // build the query
-                $parms = array();
-                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal1`, `portal2`, `region`) VALUES (:logid, :datetime, :user, :portal1, :portal2, :region)
-                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
-                $_GET['table']);
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':user',$_GET['user']);
-                $parms[] = array(':portal1',$_GET['portal1']);
-                $parms[] = array(':portal2',$_GET['portal2']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $portals = getPortalObject($db, array($_GET['portal1'],$_GET['portal1']));
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'portals'=>$portals,
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        } 
-        elseif ($_GET['table'] == 'decayed') 
-        {
-            { // build the query
-                $parms = array();
-                $query = "INSERT INTO `ingress`.`decay_log` (`guid`, `datetime`, `portal1`, `portal2`, `region`) VALUES (:logid, :datetime, :portal1, :portal2, :region)
-                ON DUPLICATE KEY UPDATE `datetime`='%s', `region`=%d;";
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':portal1',$_GET['portal1']);
-                $parms[] = array(':portal2',$_GET['portal2']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $portals = getPortalObject($db, array($_GET['portal1'],$_GET['portal1']));
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'portals'=>$portals,
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        } 
-        elseif ($_GET['table'] == 'liberate' || $_GET['table'] == 'control') 
-        {
-            { // build the query
-                $parms = array();
-                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mus`, `region`) VALUES (:logid, :datetime, :user, :portal, :mus, :region)
-                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
-                $_GET['table']);
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':user',$_GET['user']);
-                $parms[] = array(':portal',$_GET['portal']);
-                $parms[] = array(':mus',$_GET['mus']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $portal = getPortalObject($db, $_GET['portal']);
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'portal'=>$portal,
-                    'mus'=>$_GET['mus'],
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        } 
-        elseif ($_GET['table'] == 'captured') 
-        {
-            { // build the query
-                $parms = array();
-                $query = sprintf("INSERT INTO `ingress`.`capture_log` (`guid`, `datetime`, `user`, `portal`, `region`) VALUES (:logid, :datetime, :user, :portal, :region) 
-                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;");
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':user',$_GET['user']);
-                $parms[] = array(':portal',$_GET['portal']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $portal = getPortalObject($db, $_GET['portal']);
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'portal'=>$portal,
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        } 
-        elseif ($_GET['table'] == 'chat') 
-        {
-            { // build the query
-                $parms = array();
-                $query = "INSERT INTO `ingress`.`chat_log` (`guid`, `datetime`, `user`, `text`, `secure`, `region`) VALUES (:logid, :datetime, :user, :text, :secure, :region) 
-                ON DUPLICATE KEY UPDATE `secure`=:secure, `datetime`=:datetime, `region`=:region";
-                $parms[] = array(':logid',$_GET['guid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':user',$_GET['user']);
-                $parms[] = array(':text',$_GET['text']);
-                $parms[] = array(':secure',($_GET['secure'] == 'true' ? 1 : 0));
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $regionObject = getRegionObject($db,$region);
-                $pingback_object = array('guid'=>$_GET['guid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'channel'=>($_GET['secure'] == 1 ? $user[0]['faction'] : "PUBLIC"),
-                    'text'=>$_GET['text'],
-                    'region'=>$regionObject);
-                $pingback_type = $_GET['table'];
-            }
-        }
-        elseif ($_GET['table'] == 'pmoddestroy') 
-        {
-            { // build the query
-                $parms = array();
-                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mod`, `region`) VALUES (:logid, :datetime, :userid, :portalid, :mod, :region)
-                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `mod`=:mod, `region`=:region;",
-                    $_GET['table']);
-                $parms[] = array(':logid',$_GET['logid']);
-                $parms[] = array(':datetime',strtotime($_GET['ts']));
-                $parms[] = array(':userid',$_GET['user']);
-                $parms[] = array(':portalid',$_GET['portal']);
-                $parms[] = array(':mod',$_GET['mod']);
-                $parms[] = array(':region',$region);
-                    
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-            }
-            
-            { // execute the update
-                /* Update doesn't return a resultset */
-                try 
-                {
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) 
-                    {
-                        header(':', true, 201);
-                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                    } 
-                    else
-                    {
-                        if ($debug)
-                        {
-                            print_r($parms);
-                            print_r($stmt);
-                        }                
-                        header(':', true, 206);
-                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                    }
-                }
-                catch (PDOException $e)
-                {
-                    header(':', true, 500);
-                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                    exit();
-                }
-            }
-        
-            { // build a pingback object
-                $user = getPlayerObject($db, null, $_GET['user']);
-                $portal = getPortalObject($db, $_GET['portal']);
-                $pingback_object = array('guid'=>$_GET['logid'], 
-                    'datetime'=>$_GET['ts'], 
-                    'user'=>$user, 
-                    'portal'=>$portal,
-                    'mod'=>$_GET['mod'],
-                    'region'=>getRegionObject($db,$region));
-                $pingback_type = 'pmoddestroy';
-            }
-        }
         else
         {
-            header(':', true, 400);
-            printf("<div id=\"fail\">\n  <error details=\"unsupported table for the save method\" />\n</div>\n");
-        } 
-        
-        if ($pingback_object && $pingback_type) 
-        {
-            { // build the query... wow that was easy. ha!
-                $query = "SELECT url, region FROM `pingback`;";
-            }
-
-            { // set up the statement / execute
-                $stmt = $db->prepare($query);
-
-                try 
-                {
-                    $stmt->execute();
-                } 
-                catch (PDOException $e)
-                {
-                    return("<div id=\"fail_pingback\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
-                }
-            }
-            
-            if ($debug)
-            {
-                printf("the package is: %s\n", json_encode($pingback_object));
-            }
-            { // populate our player object / return
-                if ($stmt->rowCount() > 0) 
-                {
-                    while($row = $stmt->fetch()) 
-                    {
-                        if ($row['region'] == $pingback_object['region'][0]['guid']) 
-                        {
-                            if ($debug) 
-                            {
-                                printf("normally hitting %s with the package\n", $row['url']);
-                            }
-                            $url = $row['url'];
-                            $vars = 'json=' . json_encode($pingback_object);
-                            $vars .= '&type=' . $pingback_type;
-                            
-                            if (isset($_GET['debug']))
-                                $vars .= '&debug=true';
-
-                            $ch = curl_init( $url );
-                            curl_setopt( $ch, CURLOPT_POST, 1);
-                            curl_setopt( $ch, CURLOPT_POSTFIELDS, $vars);
-                            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, 1);
-                            curl_setopt( $ch, CURLOPT_HEADER, 0);
-                            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1);
-
-                            $response = curl_exec( $ch );
-                            if (isset($_GET['debug']))
-                                echo $response; // hide the response.
-                        }            
-                    }
-                } 
-            }
+            header(':', true, 403);
+            die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
         }
-        
-    } // --------------------
-    elseif ($method == 'query') 
+    }
+    
     { // QUERY STUFF
     
         if ($_GET['table'] == 'view_players') 
@@ -1027,16 +402,637 @@ if (isset($_GET['key']) && isset($_GET['table']) && isset($method))
             printf("<div id=\"fail\">\n  <error details=\"unsupported table for the query method\" />\n</div>\n");
         }
     }    
-    else 
-    { // BAD METHOD
-        header(':', true, 400);
-        printf("<div id=\"fail\">\n  <error details=\"unsupported method\" />\n</div>\n");
+
+}
+else if (isset($_POST['key']) && isset($_POST['package']))
+{
+    { // we were hit by a scrapper, verify its legit... 
+        $stmt = $db->prepare("SELECT id, name FROM regions WHERE scrapper = :key;");
+        $stmt->bindParam(':key',$_POST['key']);
+
+        $stmt->execute();
+        while ($row = $stmt->fetch()) {
+            $region = $row['id'];
+        }
+        print_r($stmt->rowCount());
+        
+        if ($stmt->rowCount() > 0) 
+        {
+            header(':', true, 200);
+            if (isset($_POST['debug']))
+                echo "  67:key accepted\n";
+        } 
+        else
+        {
+            header(':', true, 403);
+            die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
+        }
     }
+
+    { // SAVE STUFF
+        $pingback_object = null;
+        $pingback_type = null;
+        
+        /*if ($_GET['table'] == 'email' && isset($_GET['object'])) 
+        { // this method is here just to catch new features as they are added to ingress/intel
+            $message = "looks like a new and unsupported method has been implemented into the intel website. Here are the details:\n\n".$_GET['object']."\n\n";
+            ob_start();
+            print_r(json_decode(urldecode($_GET['object'])));
+            $message .= ob_get_clean();
+            mail("michael@writhem.com", 'Calgary Ingress API Alerter', $message);
+
+            header(':', true, 501);
+            printf("<div id=\"fail\">\n  <error details=\"unsupported intel ingress object for the save method\" />\n</div>\n");
+        }*/
+        /*elseif ($_GET['table'] == 'portal') 
+        {
+            { // build the query
+                $parms = array();
+                $query = "INSERT INTO `ingress`.`portals` (`guid`, `address`, `latE6`, `lngE6`, `name`, `team`, `region`) VALUES (:guid, :address, :latE6, :lngE6, :name, :team, :region)
+    ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
+                $parms[] = array(':guid',$_GET['guid']);
+                $parms[] = array(':address',$_GET['address']);
+                $parms[] = array(':latE6',$_GET['latE6']);
+                $parms[] = array(':lngE6',$_GET['lngE6']);
+                $parms[] = array(':name',$_GET['name']);
+                $parms[] = array(':team',$_GET['team']);
+                $parms[] = array(':region',(int)$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'player') 
+        {
+            { // build the query
+                $parms = array();
+                $query = "INSERT INTO `ingress`.`players` (`guid`, `name`, `team`, `region`) VALUES (:guid, :name, :team, :region)
+    ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
+                $parms[] = array(':guid',$_GET['guid']);
+                $parms[] = array(':name',$_GET['name']);
+                $parms[] = array(':team',$_GET['team']);
+                $parms[] = array(':region',(int)$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'deploy' || $_GET['table'] == 'destroy') 
+        {
+            { // build the query
+                $parms = array();
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `res`, `region`) VALUES (:logid, :datetime, :user, :portal, :res, :region)
+                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `res`=:res, `region=:region;",
+                $_GET['table']);
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':user',$_GET['user']);
+                $parms[] = array(':portal',$_GET['portal']);
+                $parms[] = array(':res',$_GET['res']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $portal = getPortalObject($db, $_GET['portal']);
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'portal'=>$portal,
+                    'res'=>$_GET['res'],
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'break' || $_GET['table'] == 'linked') 
+        {
+            { // build the query
+                $parms = array();
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal1`, `portal2`, `region`) VALUES (:logid, :datetime, :user, :portal1, :portal2, :region)
+                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                $_GET['table']);
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':user',$_GET['user']);
+                $parms[] = array(':portal1',$_GET['portal1']);
+                $parms[] = array(':portal2',$_GET['portal2']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $portals = getPortalObject($db, array($_GET['portal1'],$_GET['portal1']));
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'portals'=>$portals,
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'decayed') 
+        {
+            { // build the query
+                $parms = array();
+                $query = "INSERT INTO `ingress`.`decay_log` (`guid`, `datetime`, `portal1`, `portal2`, `region`) VALUES (:logid, :datetime, :portal1, :portal2, :region)
+                ON DUPLICATE KEY UPDATE `datetime`='%s', `region`=%d;";
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':portal1',$_GET['portal1']);
+                $parms[] = array(':portal2',$_GET['portal2']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $portals = getPortalObject($db, array($_GET['portal1'],$_GET['portal1']));
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'portals'=>$portals,
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'liberate' || $_GET['table'] == 'control') 
+        {
+            { // build the query
+                $parms = array();
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mus`, `region`) VALUES (:logid, :datetime, :user, :portal, :mus, :region)
+                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                $_GET['table']);
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':user',$_GET['user']);
+                $parms[] = array(':portal',$_GET['portal']);
+                $parms[] = array(':mus',$_GET['mus']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $portal = getPortalObject($db, $_GET['portal']);
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'portal'=>$portal,
+                    'mus'=>$_GET['mus'],
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'captured') 
+        {
+            { // build the query
+                $parms = array();
+                $query = sprintf("INSERT INTO `ingress`.`capture_log` (`guid`, `datetime`, `user`, `portal`, `region`) VALUES (:logid, :datetime, :user, :portal, :region) 
+                ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;");
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':user',$_GET['user']);
+                $parms[] = array(':portal',$_GET['portal']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $portal = getPortalObject($db, $_GET['portal']);
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'portal'=>$portal,
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }
+        */
+        /*elseif ($_GET['table'] == 'chat') 
+        {
+            { // build the query
+                $parms = array();
+                $query = "INSERT INTO `ingress`.`chat_log` (`guid`, `datetime`, `user`, `text`, `secure`, `region`) VALUES (:logid, :datetime, :user, :text, :secure, :region) 
+                ON DUPLICATE KEY UPDATE `secure`=:secure, `datetime`=:datetime, `region`=:region";
+                $parms[] = array(':logid',$_GET['guid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':user',$_GET['user']);
+                $parms[] = array(':text',$_GET['text']);
+                $parms[] = array(':secure',($_GET['secure'] == 'true' ? 1 : 0));
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $regionObject = getRegionObject($db,$region);
+                $pingback_object = array('guid'=>$_GET['guid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'channel'=>($_GET['secure'] == 1 ? $user[0]['faction'] : "PUBLIC"),
+                    'text'=>$_GET['text'],
+                    'region'=>$regionObject);
+                $pingback_type = $_GET['table'];
+            }
+        }*/
+        /*elseif ($_GET['table'] == 'pmoddestroy') 
+        {
+            { // build the query
+                $parms = array();
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mod`, `region`) VALUES (:logid, :datetime, :userid, :portalid, :mod, :region)
+                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `mod`=:mod, `region`=:region;",
+                    $_GET['table']);
+                $parms[] = array(':logid',$_GET['logid']);
+                $parms[] = array(':datetime',strtotime($_GET['ts']));
+                $parms[] = array(':userid',$_GET['user']);
+                $parms[] = array(':portalid',$_GET['portal']);
+                $parms[] = array(':mod',$_GET['mod']);
+                $parms[] = array(':region',$region);
+                    
+                $stmt = $db->prepare($query);
+                foreach($parms as $parm) {
+                    $stmt->bindValue($parm[0], $parm[1]);    
+                }
+            }
+            
+            { // execute the update
+                
+                try 
+                {
+                    $stmt->execute();
+                    if ($stmt->rowCount() > 0) 
+                    {
+                        header(':', true, 201);
+                        echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    } 
+                    else
+                    {
+                        if ($debug)
+                        {
+                            print_r($parms);
+                            print_r($stmt);
+                        }                
+                        header(':', true, 206);
+                        echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    }
+                }
+                catch (PDOException $e)
+                {
+                    header(':', true, 500);
+                    printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+                    exit();
+                }
+            }
+        
+            { // build a pingback object
+                $user = getPlayerObject($db, null, $_GET['user']);
+                $portal = getPortalObject($db, $_GET['portal']);
+                $pingback_object = array('guid'=>$_GET['logid'], 
+                    'datetime'=>$_GET['ts'], 
+                    'user'=>$user, 
+                    'portal'=>$portal,
+                    'mod'=>$_GET['mod'],
+                    'region'=>getRegionObject($db,$region));
+                $pingback_type = 'pmoddestroy';
+            }
+        }*/
+        /*else
+        {
+            header(':', true, 400);
+            printf("<div id=\"fail\">\n  <error details=\"unsupported table for the save method\" />\n</div>\n");
+        } */
+        
+        if ($pingback_object && $pingback_type) 
+        {
+            { // build the query... wow that was easy. ha!
+                $query = "SELECT url, region FROM `pingback`;";
+            }
+
+            { // set up the statement / execute
+                $stmt = $db->prepare($query);
+
+                try 
+                {
+                    $stmt->execute();
+                } 
+                catch (PDOException $e)
+                {
+                    return("<div id=\"fail_pingback\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
+                }
+            }
+            
+            if ($debug)
+            {
+                printf("the package is: %s\n", json_encode($pingback_object));
+            }
+            { // populate our player object / return
+                if ($stmt->rowCount() > 0) 
+                {
+                    while($row = $stmt->fetch()) 
+                    {
+                        if ($row['region'] == $pingback_object['region'][0]['guid']) 
+                        {
+                            if ($debug) 
+                            {
+                                printf("normally hitting %s with the package\n", $row['url']);
+                            }
+                            $url = $row['url'];
+                            $vars = 'json=' . json_encode($pingback_object);
+                            $vars .= '&type=' . $pingback_type;
+                            
+                            if (isset($_GET['debug']))
+                                $vars .= '&debug=true';
+
+                            $ch = curl_init( $url );
+                            curl_setopt( $ch, CURLOPT_POST, 1);
+                            curl_setopt( $ch, CURLOPT_POSTFIELDS, $vars);
+                            curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, 1);
+                            curl_setopt( $ch, CURLOPT_HEADER, 0);
+                            curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1);
+
+                            $response = curl_exec( $ch );
+                            if (isset($_GET['debug']))
+                                echo $response; // hide the response.
+                        }            
+                    }
+                } 
+            }
+        }
+        
+    } // --------------------
 
 }
 else
 {  // BAD REQUEST
-    header(':', true, 400);
+    echo "post data";
+    var_dump($_POST);
+    //header(':', true, 400);
     echo "bad api request! help <a href=\"../help/\">here</a>\n";
 }
 
