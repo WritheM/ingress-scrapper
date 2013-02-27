@@ -1,0 +1,571 @@
+.SPRITE_chevron_down{
+  display: inline-block;
+  width: 14px;
+  height: 6px;
+  *margin-right: .3em;
+  line-height: 14px;
+  vertical-align: text-top;
+  background-image: url("/img/sprite.png");
+  background-position: -28px -47px;
+  background-repeat: no-repeat;
+  margin-top: 1px;
+}
+.SPRITE_chevron{background:no-repeat url(/img/sprite.png) -28px -41px;width:14px;height:6px}
+.SPRITE_invite_down{background:no-repeat url(/img/sprite.png) -28px -28px;width:20px;height:13px}
+.SPRITE_invite{background:no-repeat url(/img/sprite.png) -28px -53px;width:20px;height:13px}
+.SPRITE_share_down{background:no-repeat url(/img/sprite.png) -28px -14px;width:20px;height:14px}
+.SPRITE_share{background:no-repeat url(/img/sprite.png) -28px 0;width:20px;height:14px}
+.SPRITE_pub_icon{width:24px;height:32px}
+
+[class*=" sprite-"] {
+  display: inline-block;
+  width: 24px;
+  height: 30px;
+  *margin-right: .3em;
+  line-height: 14px;
+  vertical-align: text-top;
+  background-image: url("/img/sprite.png");
+  background-position: -50px 0px;
+  background-repeat: no-repeat;
+}
+.sprite-aliens {
+  background-position: 0      0;
+}
+.sprite-resistance {
+  background-position: 0      -32px;
+}
+.sprite-neutral {
+  width: 0px;
+  height: 30px;
+}
+
+#footer {
+background-color: transparent;
+font-size: 10px;
+padding: 16px 0 15px 0;
+margin: 20px 0 0 0;
+text-align: center;
+}
+
+#footer p {
+ font-size: 10px;
+ color: #999;
+ text-align: center;
+}
+#footer address {
+ font-style: normal;
+}
+
+
+/* Copyright 2013 Google Inc. All Rights Reserved. */
+
+.color_cyan {
+  color: #59fbea;
+}
+
+.color_orange {
+  color: #ebbc4a;
+}
+
+/**
+ * A fixed-width font for numbers.
+ */
+.number {
+  font-family: arial, helvetica, sans-serif;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.RESISTANCE {
+  color: #00c2ff;
+}
+
+.ENLIGHTENED {
+  color: #28f428;
+}
+
+.PUBLIC {
+  color: #f9f9f9;
+}
+
+/* Common styles for the whole site */
+@font-face {
+  font-family: coda_regular;
+  /* src: url('../ttf/coda_regular.ttf'); */
+}
+
+html, body {
+  background-color: #0b0c0d;
+  color: #ddd;
+  font-family: coda_regular, arial, helvetica, sans-serif;
+  font-size: 15px;
+  margin: 0 auto -100px;
+  padding: 0;
+}
+
+a:link,
+a:visited {
+  text-decoration: none;
+}
+
+input[type="email"],
+input[type="text"],
+input[type="submit"] {
+  font-size: 15px;
+}
+
+/**
+ * This is to ensure the submit button is rendered at the same height as text
+ * input field in a form on Firefox.
+ */
+input[type="submit"]::-moz-focus-inner {
+  border: 0;
+}
+
+/* Dashboard Container */
+#dashboard_container {
+  border: 1px solid #4a9299;
+  position: absolute;
+}
+
+/* Google Maps */
+#map_canvas {
+  height: 100%;
+  width: 100%;
+}
+
+/* Forms: Location Search and Passcode Redemption */
+input[type="email"],
+input[type="text"],
+input[type="submit"] {
+  border: 1px solid #59fbea;
+  font-family: coda_regular, arial, helvetica, sans-serif;
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+}
+
+input[type="email"],
+input[type="text"] {
+  background-color: rgb(11, 12, 13);
+  color: #ddd;
+  padding: 1px 5px;
+}
+
+input[type="submit"] {
+  background-color: rgb(0, 79, 74);
+  color: #59fbea;
+  padding: 1px 15px;
+}
+
+#geocode_search {
+  font-size: 15px;
+  position: absolute;
+  z-index: 1;
+}
+
+/* Map Loading Spinner */
+
+@keyframes spin_clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@-o-keyframes spin_clockwise {
+  0% { -o-transform: rotate(0deg); }
+  100% { -o-transform: rotate(360deg); }
+}
+
+@-moz-keyframes spin_clockwise {
+  0% { -moz-transform: rotate(0deg); }
+  100% { -moz-transform: rotate(360deg); }
+}
+
+@-webkit-keyframes spin_clockwise {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin_counter_clockwise {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@-o-keyframes spin_counter_clockwise {
+  0% { -o-transform: rotate(0deg); }
+  100% { -o-transform: rotate(-360deg); }
+}
+
+@-moz-keyframes spin_counter_clockwise {
+  0% { -moz-transform: rotate(0deg); }
+  100% { -moz-transform: rotate(-360deg); }
+}
+
+@-webkit-keyframes spin_counter_clockwise {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(-360deg); }
+}
+
+#map_spinner {
+  position: absolute;
+  z-index: 1;
+}
+
+#butterbar {
+  background: rgb(1, 1, 1);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #ebbc4a;
+  bottom: 80px;
+  color: #ebbc4a;
+  cursor: pointer;
+  padding: 8px 20px 10px 20px;
+  position: absolute;
+  right: -2px;
+  z-index: 1;
+}
+
+.portal_level_indicator,
+#version_switcher,
+#map_spinner_text {
+  color: #59fbea;
+  font-family: coda_regular, arial, helvetica, sans-serif;
+  font-size: 13px;
+  padding: 1px 5px;
+  text-shadow: 0 0 3px #0b0c0d;
+}
+
+#version_switcher {
+  bottom: 25px;
+  position: absolute;
+  right: 8px;
+  z-index: 1;
+}
+
+#version_switcher a{
+  color: #59fbea;
+}
+
+.selected_version {
+  color: #ebbc4a;
+}
+
+#map_spinner_text {
+  color: #ffd652;
+  text-align: center;
+}
+
+#zoom_level_data {
+  bottom: 40px;
+  position: absolute;
+  right: 5px;
+  text-align: right;
+}
+
+
+}
+
+/* Plexts (Activity Feed) */
+#comm {
+  bottom: -55px;
+  font-size: 13px;
+  left: -5px;
+  position: absolute;
+  width: 50%;
+  /* Needs to be higher than separator_left_arm */
+  z-index: 2;
+}
+
+#plext_primary_title {
+  background-color: rgb(0, 79, 74);
+  border: 1px solid #59fbea;
+  color: #ebbc4a;
+  cursor: pointer;
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin-bottom: -1px;
+  text-align: center;
+  width: 100px;
+}
+
+.comm_expanded .SPRITE_chevron_down,
+.SPRITE_chevron {
+  display: inline-block;
+  margin: 3px;
+}
+
+.comm_expanded .SPRITE_chevron,
+.SPRITE_chevron_down {
+  display: none;
+}
+
+#plext_tab_group_container {
+  margin-right: -2px;
+  position: absolute;
+  right: 0;
+  z-index: 1;
+}
+
+.plext_tab_title {
+  background-color: rgb(0, 79, 74);
+  border: 1px solid #59fbea;
+  color: #59fbea;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0 5px;
+  text-align: center;
+  width: 80px;
+}
+
+.plext_tab_title.tab_selected {
+  background-color: rgb(39, 46, 50);
+  border: 1px solid #ebbc4a;
+  color: #ebbc4a;
+  cursor: default;
+}
+
+#plext_viewport_restrict_checkbox_container {
+  background-color: rgb(39, 46, 50);
+  background-color: rgba(39, 46, 50, 0.9);
+  box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -moz-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -o-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -webkit-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  position: absolute;
+  right: 16px;
+  top: 54px;
+  z-index: 1;
+}
+
+#pl_checkbox_text {
+  color: #59fbea;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+#pl_status {
+  background-color: rgb(39, 46, 50);
+  background-color: rgba(39, 46, 50, 0.9);
+  box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -moz-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -o-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  -webkit-box-shadow: 0 0 10px 2px rgba(39, 46, 50, 0.9);
+  display: inline-block;
+  height: 25px;
+}
+
+#pl_spinner {
+  margin-left: 22px;
+  margin-top: 2px;
+}
+
+.img_progress {
+  background: no-repeat url(//commondatastorage.googleapis.com/ingress.com/img/progress.png);
+  display: inline-block;
+  height: 20px;
+  margin-top: 2px;
+  width: 20px;
+  animation: spin_clockwise 4s linear 0s infinite;
+  -o-animation: spin_clockwise 4s linear 0s infinite;
+  -moz-animation: spin_clockwise 4s linear 0s infinite;
+  -webkit-animation: spin_clockwise 4s linear 0s infinite;
+}
+
+.pl_status_text {
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: top;
+}
+
+#plext_container {
+  border: 1px solid #59fbea;
+  background-color: rgb(39, 46, 50);
+  background-color: rgba(39, 46, 50, 0.9);
+  height: 80px;
+  overflow-y: scroll;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.comm_expanded #plext_container {
+  height: 460px;
+}
+
+.plext {
+  display: table-row;
+  -webkit-transform: translateZ(0px);
+}
+
+.pl_timestamp {
+  color: #008780;
+  display: table-cell;
+  font-family: arial, helvetica, sans-serif;
+  font-size: 12px;
+  text-align: right;
+  width: 52px;
+  cursor:help;
+}
+
+.timestamp {
+  cursor:help;
+}
+
+.pl_content {
+  display: table-cell;
+  line-height: 16px;
+  padding: 3px 5px;
+}
+
+.pl_broad {
+  color: #00bab5;
+}
+
+.pl_narrow {
+  color: #d8ad4c;
+}
+
+.pl_player {
+  color: #cfe5e5;
+}
+
+.pl_portal_name {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.pl_broad .pl_portal_address {
+  color: #008780;
+  cursor: pointer;
+}
+
+.pl_narrow .pl_portal_address {
+  color: #a5823c;
+  cursor: pointer;
+}
+
+.pl_secure {
+  color: #ff5555;
+}
+
+/* Forms: Location Search and Passcode Redemption */
+
+.form_input {
+  width: 300px;
+}
+
+#redeem_reward input[type="submit"] {
+  margin-right: -5px;
+}
+
+#comm input[type="text"] {
+  width: 80%;
+}
+
+#comm input[type="submit"] {
+  float: right;
+  margin-left: -15px;
+  margin-right: -2px;
+  width: 20%;
+}
+
+#send_plext_form {
+  margin-top: -3px;
+}
+
+#geocode_search {
+  right: -7px;
+  top: -35px;
+}
+
+#geocode_search input[type="submit"] {
+  margin-left: -5px;
+}
+
+#redeem_reward {
+  bottom: -58px;
+  font-size: 15px;
+  position: absolute;
+  right: -7px;
+  text-align: right;
+  z-index: 1;
+}
+
+#passcode {
+  display: none;
+}
+
+.show_box #passcode {
+  display: inline-block;
+  animation: expand_redeem_box 0.3s linear 0s;
+  -moz-animation: expand_redeem_box 0.3s linear 0s;
+  -o-animation: expand_redeem_box 0.3s linear 0s;
+  -webkit-animation: expand_redeem_box 0.3s linear 0s;
+}
+
+@keyframes expand_redeem_box {
+  0% { width: 0; }
+  95% { width: 330px; }
+  100% { width: 300px; }
+}
+
+@-moz-keyframes expand_redeem_box {
+  0% { width: 0; }
+  95% { width: 330px; }
+  100% { width: 300px; }
+}
+
+@-o-keyframes expand_redeem_box {
+  0% { width: 0; }
+  95% { width: 330px; }
+  100% { width: 300px; }
+}
+
+@-webkit-keyframes expand_redeem_box {
+  0% { width: 0; }
+  95% { width: 330px; }
+  100% { width: 300px; }
+}
+
+.reward,
+#redeem_error {
+  color: red;
+}
+
+#redeem_results {
+  font-size: 15px;
+  height: 25px;
+  text-align: right;
+}
+
+/* Mobile vs Full Version Switch */
+#version_switch {
+}
+
+/* Map Loading Spinner */
+
+#map_spinner {
+  bottom: 65px;
+  height: 122px;
+  right: 20px;
+}
+
+.img_outerwheel {
+  background: no-repeat url(//commondatastorage.googleapis.com/ingress.com/img/outerwheel.png);
+  height: 102px;
+  margin: 0 auto;
+  width: 100px;
+  animation: spin_counter_clockwise 4s linear 0s infinite;
+  -o-animation: spin_counter_clockwise 4s linear 0s infinite;
+  -moz-animation: spin_counter_clockwise 4s linear 0s infinite;
+  -webkit-animation: spin_counter_clockwise 4s linear 0s infinite;
+}
+
+.img_innerwheel {
+  background: no-repeat url(//commondatastorage.googleapis.com/ingress.com/img/innerwheel.png);
+  height: 102px;
+  width: 100px;
+  animation: spin_clockwise 2s linear 0s infinite;
+  -o-animation: spin_clockwise 2s linear 0s infinite;
+  -moz-animation: spin_clockwise 2s linear 0s infinite;
+  -webkit-animation: spin_clockwise 2s linear 0s infinite;
+}
