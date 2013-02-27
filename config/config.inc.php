@@ -1,4 +1,7 @@
 <?php
+$cfg['site']['contact'] = 'writhem@dispostable.com';
+$cfg['site']['title'] = 'WritheM Ingress Alerter';
+
 $cfg['db']['host'] = 'localhost';
 $cfg['db']['dbase'] = 'ingress';
 $cfg['db']['user'] = '';
