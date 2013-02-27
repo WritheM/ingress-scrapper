@@ -1,7 +1,7 @@
 // ==UserScript==
 // @id             iitc-plugin-writhem-api@pironic
 // @name           iitc: writhem-api hooks
-// @version        0.0.2
+// @version        0.0.3
 // @namespace      https://github.com/breunigs/ingress-intel-total-conversion
 // @updateURL      ingress.writhem.com/writhem-api.user.js
 // @downloadURL    ingress.writhem.com/writhem-api.user.js
@@ -51,27 +51,25 @@ function wrapper() {
             return window.idleTime >= MAX_IDLE_TIME;
         }
         
-        // intercept and inject my own functionality into the writheDataToHash method.
+        // intercept and inject my own functionality into the writeDataToHash method.
         // this will allow me to hijack the data for my own evil intent.
-        window.plugin.writhemAPI.originalWriteDataToHash = window.chat.writeDataToHash;
+        window.plugin.writhemAPI.writhemDataToHash = window.chat.writeDataToHash;
         window.chat.writeDataToHash = function(newData, storageHash, skipSecureMsgs) {
-            //console.log(newData);
+            // intercept the data, and send to our db.
             if (window.plugin.writhemAPI.enabled) {
                 var data = {
                     "key":window.plugin.writhemAPI.apikey,
                     "method":"save",
                     "package":newData
                 };
-                // $('#writhemStatus').load(WRITHEMAPIURL,writhem_temp);
-                console.log($.ajax(window.plugin.writhemAPI.url, {
-                    data : JSON.stringify(data),
-                    dataType : 'json',
-                    type : 'POST',
-                }));
-                console.log(data);
+                $.post(window.plugin.writhemAPI.url, data)
+                .done(function(response) {
+                    $('#portaldetails').html(response);
+                });
+                
             }
 
-            window.plugin.writhemAPI.originalWriteDataToHash (newData,storageHash,skipSecureMsgs);
+            window.plugin.writhemAPI.writhemDataToHash (newData,storageHash,skipSecureMsgs);
         }
     }
     
