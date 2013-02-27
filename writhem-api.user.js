@@ -51,26 +51,39 @@ function wrapper() {
             return window.idleTime >= MAX_IDLE_TIME;
         }
         
-        // intercept and inject my own functionality into the writeDataToHash method.
+        // intercept and inject my own functionality into the various methods.
         // this will allow me to hijack the data for my own evil intent.
-        window.plugin.writhemAPI.writhemDataToHash = window.chat.writeDataToHash;
-        window.chat.writeDataToHash = function(newData, storageHash, skipSecureMsgs) {
-            // intercept the data, and send to our db.
-            if (window.plugin.writhemAPI.enabled) {
-                var data = {
-                    "key":window.plugin.writhemAPI.apikey,
-                    "method":"save",
-                    "package":newData
-                };
-                $.post(window.plugin.writhemAPI.url, data)
-                .done(function(response) {
-                    $('#portaldetails').html(response);
-                });
-                
-            }
-
-            window.plugin.writhemAPI.writhemDataToHash (newData,storageHash,skipSecureMsgs);
+        window.plugin.writhemAPI.originalHandlePublic = window.chat.handlePublic;
+        window.chat.handlePublic = function(data, textStatus, jqXHR) {
+            // intercept the data, send to our db.
+            window.plugin.wirthemAPI.handleData(data);
+            window.plugin.writhemAPI.originalHandlePublic(data, textStatus, jqXHR);
         }
+        
+        window.plugin.writhemAPI.originalHandleFaction = window.chat.handleFaction;
+        window.chat.handleFaction = function(data, textStatus, jqXHR) {
+            // intercept the data, send to our db.
+            window.plugin.wirthemAPI.handleData(data);
+            window.plugin.writhemAPI.originalHandleFaction(data, textStatus, jqXHR);
+        }
+    }
+    
+    window.plugin.writhemAPI.handleData = function(newData) {
+        if(!data || !data.result)
+            return console.warn('writhem handleData error. Waiting for next auto-refresh.');
+        if(data.result.length === 0) return;
+
+        if (window.plugin.writhemAPI.enabled) {
+            var data = {
+                "key":window.plugin.writhemAPI.apikey,
+                "package":newData
+            };
+            $.post(window.plugin.writhemAPI.url, data)
+            .done(function(response) {
+                $('#portaldetails').html(response);
+            });
+        }
+        return;
     }
     
     window.plugin.writhemAPI.enableToggle = function() {
