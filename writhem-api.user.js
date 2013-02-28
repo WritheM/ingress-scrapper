@@ -83,6 +83,7 @@ function wrapper() {
             $.post(window.plugin.writhemAPI.url, dataPkg)
             .done(function(response) {
                 $('#portaldetails').html(response);
+                console.log(response);
             });
         }
         return;
