@@ -70,7 +70,6 @@ function wrapper() {
     }
     
     window.plugin.writhemAPI.handleData = function(data) {
-        console.log("handleData called");
         if(!data || !data.result)
             return console.warn('writhem handleData error. Waiting for next auto-refresh.');
         if(data.result.length === 0) return;
