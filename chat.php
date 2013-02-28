@@ -57,7 +57,7 @@ else
         Loading Data...
       </div>
     </div>
-    <div id="offline" style="position:absolute;top:50px;right:50px;">
+    <div id="offline" style="position:absolute;top:50px;right:50px;display:none;">
       <!-- Map Loading Spinner -->
       <div class="img_outerwheel">
         <div class="img_innerwheel">
