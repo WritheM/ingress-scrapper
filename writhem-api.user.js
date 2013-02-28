@@ -30,6 +30,7 @@ function wrapper() {
     var setup =  function() {
         window.plugin.writhemAPI.setupCallback();
         window.plugin.writhemAPI.setupOverloads();
+        console.log("WritheM API Loaded");
     }
     
     window.plugin.writhemAPI.setupCallback = function() {
@@ -56,29 +57,30 @@ function wrapper() {
         window.plugin.writhemAPI.originalHandlePublic = window.chat.handlePublic;
         window.chat.handlePublic = function(data, textStatus, jqXHR) {
             // intercept the data, send to our db.
-            window.plugin.wirthemAPI.handleData(data);
+            window.plugin.writhemAPI.handleData(data);
             window.plugin.writhemAPI.originalHandlePublic(data, textStatus, jqXHR);
         }
         
         window.plugin.writhemAPI.originalHandleFaction = window.chat.handleFaction;
         window.chat.handleFaction = function(data, textStatus, jqXHR) {
             // intercept the data, send to our db.
-            window.plugin.wirthemAPI.handleData(data);
+            window.plugin.writhemAPI.handleData(data);
             window.plugin.writhemAPI.originalHandleFaction(data, textStatus, jqXHR);
         }
     }
     
-    window.plugin.writhemAPI.handleData = function(newData) {
+    window.plugin.writhemAPI.handleData = function(data) {
+        console.log("handleData called");
         if(!data || !data.result)
             return console.warn('writhem handleData error. Waiting for next auto-refresh.');
         if(data.result.length === 0) return;
 
         if (window.plugin.writhemAPI.enabled) {
-            var data = {
+            var dataPkg = {
                 "key":window.plugin.writhemAPI.apikey,
-                "package":newData
+                "package":data
             };
-            $.post(window.plugin.writhemAPI.url, data)
+            $.post(window.plugin.writhemAPI.url, dataPkg)
             .done(function(response) {
                 $('#portaldetails').html(response);
             });
