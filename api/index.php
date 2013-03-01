@@ -442,9 +442,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                 
                 if ($v[2]['plext']['markup'][0][1]['plain'] == "Your ")
                 {
-                /*  if (json[2].plext.markup[0][1].plain == "Your ") {
-                      console.log("ignoring log for a 'Your' entry."); */
-                    // ignore this entry... who cares about my person stuff? nobody!
+                    // ignore this entry... who cares about my personal stuff? nobody!
                 } 
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " deployed an ") 
                 {
@@ -634,12 +632,13 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         $chat = array(
                             'guid'=>$guid,
                             'datetime'=>(int)$datetime,
-                            'user'=>$sender['guid'],
+                            'user'=>$player['guid'],
                             'text'=>$text['plain'],
                             'secure'=>$secure,
                             'region'=>$region
                         );
                         
+                        $player['name'] = $player['plain'];
                         $player['region'] = $region;
                     }
                     
@@ -650,11 +649,11 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         
                         $response = saveChatObject($db, $chat);
                         header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />%s\n</div>\n", $response['class'], $response['detail'], $response['debug']);
                     }
                     
                     { // build a pingback
-                        $user = getPlayerObject($db, null, $sender['guid']);
+                        $user = getPlayerObject($db, null, $player['guid']);
                         $regionObject = getRegionObject($db,$region);
                         $pingback_object = array('guid'=>$guid, 
                             'datetime'=>(int)$datetime, 

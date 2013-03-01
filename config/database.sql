@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS `alerts_log` (
 CREATE TABLE IF NOT EXISTS `api` (
   `key` varchar(32) NOT NULL,
   `hits` int(11) NOT NULL DEFAULT '0',
-  `last_hit` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `last_hit` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   `name` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`key`)
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `break_log` (
   `portal1` varchar(40) NOT NULL,
   `portal2` varchar(40) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `capture_log` (
   `user` varchar(40) NOT NULL,
   `portal` varchar(40) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS `chat_log` (
   `user` varchar(40) NOT NULL,
   `text` text NOT NULL,
   `secure` tinyint(1) NOT NULL,
-  `lastupdated` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `control_log` (
   `portal` varchar(40) NOT NULL,
   `mus` int(11) DEFAULT '0',
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `decay_log` (
   `portal1` varchar(40) NOT NULL,
   `portal2` varchar(40) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS `deploy_log` (
   `portal` varchar(40) NOT NULL,
   `res` varchar(10) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS `destroy_log` (
   `portal` varchar(40) NOT NULL,
   `res` varchar(10) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS `liberate_log` (
   `portal` varchar(40) NOT NULL,
   `mus` int(11) DEFAULT '0',
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS `linked_log` (
   `portal1` varchar(40) NOT NULL,
   `portal2` varchar(40) NOT NULL,
   `datetime` int(11) DEFAULT NULL,
-  `lastupdate` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS `players` (
   `guid` varchar(40) NOT NULL,
   `name` varchar(255) NOT NULL,
   `team` varchar(20) NOT NULL,
-  `lastupdate` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS `portals` (
   `lngE6` varchar(15) NOT NULL,
   `name` varchar(255) NOT NULL,
   `team` varchar(20) DEFAULT NULL,
-  `lastupdate` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `lastupdate` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   PRIMARY KEY (`guid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
