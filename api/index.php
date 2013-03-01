@@ -460,10 +460,44 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                       writhem_temp = writhem_temp + "&portal=" + port;
                       //console.log("hitting writhem api with : "+writhem_temp);
                       $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp); */
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $player = $v[2]['plext']['markup'][0][1];
+                        $res = $v[2]['plext']['markup'][2][1]['plain'];
+                        $portal = $v[2]['plext']['markup'][4][1];
+                    }
                     
-                    //header(':', true, 206);
-                    //echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-
+                    { // create the temporary objects
+                                                
+                        $resonator = array(
+                            'guid'=>$player['guid'],
+                            'name'=>$player['plain'],
+                            'team'=>$player['team'],
+                            'region'=>$region
+                        );
+                        
+                        $portal['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        // not built yet!
+                        // $response = saveResonatorObject($db, $resonator); 
+                        // header(':', true, $response['code']);
+                        // printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed an ")
                 {
@@ -584,13 +618,13 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         if ($v[2]['plext']['markup'][1][0] == 'TEXT') 
                         { // public
                             $secure = false;
-                            $sender = $v[2]['plext']['markup'][0][1];
+                            $player = $v[2]['plext']['markup'][0][1];
                             $text = $v[2]['plext']['markup'][1][1];
                         }
                         else
                         { // secure
                             $secure = true;
-                            $sender = $v[2]['plext']['markup'][1][1];
+                            $player = $v[2]['plext']['markup'][1][1];
                             $text = $v[2]['plext']['markup'][2][1];
                         }
                     }
@@ -606,22 +640,17 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                             'region'=>$region
                         );
                         
-                        $player = array(
-                            'guid'=>$sender['guid'],
-                            'name'=>$sender['plain'],
-                            'team'=>$sender['team'],
-                            'region'=>$region
-                        );
+                        $player['region'] = $region;
                     }
                     
                     { // save the objects
                         $response = savePlayerObject($db, $player);
                         //header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['details']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                         
                         $response = saveChatObject($db, $chat);
                         header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />%s\n</div>\n", $response['class'], $response['detail'],$response['debug']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                     }
                     
                     { // build a pingback

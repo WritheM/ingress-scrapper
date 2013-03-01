@@ -74,7 +74,7 @@ ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
                 } 
                 else
                 {
-                    $r['class'] = 'fail_insert';
+                    $r['class'] = 'warn_insert';
                     $r['code'] = 206;
                     $r['detail'] = 'no change to player info has occured';
                 }
@@ -157,7 +157,7 @@ ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
                 } 
                 else
                 {
-                    $r['class'] = 'fail_insert';
+                    $r['class'] = 'warn_insert';
                     $r['code'] = 206;
                     $r['detail'] = 'chat log already exists.';
                 }
@@ -173,7 +173,102 @@ ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
         return $r;
     }
     
-    /*elseif ($_GET['table'] == 'portal') 
+    function savePortalObject(&$db, $portal)
+    {
+        $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
+        { // validate the object
+            if ((isset($portal) && is_array($portal))
+                && (isset($portal['guid']) && is_string($portal['guid']))
+                && (isset($portal['address']) && is_string($portal['address']))
+                && (isset($portal['latE6']) && is_int($portal['latE6']))
+                && (isset($portal['lngE6']) && is_int($portal['lngE6']))
+                && (isset($portal['name']) && is_string($portal['name']))
+                && (isset($portal['team']) && (is_int($portal['team']) || is_string($portal['team'])))
+                && (isset($portal['region']) && is_int($portal['region']))
+                ) 
+            {
+                // pass, it's a valid object!
+                // now make sure its the style we need:
+                if (is_string($portal['team']))
+                { 
+                    switch(strtolower($portal['team'])) 
+                    { // convert the ALIENS/RESISTANCE scheme to #
+                        case 'resistance':
+                            $portal['team'] = 1;
+                            break;
+                        case 'aliens':
+                            $portal['team'] = 2;
+                            break;
+                        case 'enlightened':
+                            $portal['team'] = 2;
+                            break;
+                        default :
+                            $portal['team'] = 3;
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                $r['class'] = 'fail_object';
+                $r['code'] = 500;
+                $r['detail'] = 'The provided PortalObject does not appear valid.';
+                $r['debug'] = $portal;
+            }
+        }
+        
+        { // build the query
+            $parms = array();
+            $query = "INSERT INTO `ingress`.`portals` (`guid`, `address`, `latE6`, `lngE6`, `name`, `team`, `region`) VALUES (:guid, :address, :latE6, :lngE6, :name, :team, :region)
+ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
+            $parms[] = array(':guid',$_GET['guid']);
+            $parms[] = array(':address',$_GET['address']);
+            $parms[] = array(':latE6',$_GET['latE6']);
+            $parms[] = array(':lngE6',$_GET['lngE6']);
+            $parms[] = array(':name',$_GET['name']);
+            $parms[] = array(':team',$_GET['team']);
+            $parms[] = array(':region',(int)$region);
+                
+            $stmt = $db->prepare($query);
+            foreach($parms as $parm) {
+                $stmt->bindValue($parm[0], $parm[1]);    
+            }
+        }
+
+        { // execute the insert/update
+            try 
+            {
+                $stmt->execute();
+                ob_start();
+                    print_r($parms);
+                    print_r($stmt);
+                $r['debug'] = ob_get_clean();
+                
+                if ($stmt->rowCount() > 0) 
+                {
+                    $r['class'] = 'success';
+                    $r['code'] = 201;
+                    $r['detail'] = 'portal updated';
+                } 
+                else
+                {
+                    $r['class'] = 'warn_insert';
+                    $r['code'] = 206;
+                    $r['detail'] = 'no change to portal info required';
+                }
+            }
+            catch (PDOException $e)
+            {
+                $r['class'] = 'fail_query';
+                $r['code'] = 500;
+                $r['detail'] = $e->getMessage();
+            }
+        }
+        
+        return $r;
+    }
+    
+   /*elseif ($_GET['table'] == 'portal') 
     {
         { // build the query
             $parms = array();
