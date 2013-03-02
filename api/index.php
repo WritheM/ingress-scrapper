@@ -506,19 +506,63 @@ else if (isset($_POST['key']) && isset($_POST['package']))
 
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed an ")
-                {
-                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed an ") {
-                      pguid = json[2].plext.markup[0][1].guid;
-                      var res = json[2].plext.markup[2][1].plain;
-                      var port = json[2].plext.markup[4][1].guid;
-                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=destroy";
-                      writhem_temp = writhem_temp + "&logid=" + json[0];
-                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
-                      writhem_temp = writhem_temp + "&user=" + pguid;
-                      writhem_temp = writhem_temp + "&res=" + res;
-                      writhem_temp = writhem_temp + "&portal=" + port;
-                      //console.log("hitting writhem api with : "+writhem_temp);
-                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                { // destroy a resonator
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $player = $v[2]['plext']['markup'][0][1];
+                        $res = $v[2]['plext']['markup'][2][1]['plain'];
+                        $portal = $v[2]['plext']['markup'][4][1];
+                    }
+                    
+                    { // create the temporary objects
+                                                
+                        $resonator = array(
+                            'guid'=>$guid,
+                            'user'=>$player['guid'],
+                            'portal'=>$portal['guid'],
+                            'res'=>$res,
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
+                        );
+                        
+                        $player['region'] = $region;
+                        
+                        $portal['latE6'] = (int)$portal['latE6'];
+                        $portal['lngE6'] = (int)$portal['lngE6'];
+                        $portal['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $portal);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveResonatorObject($db, 'destroy', $resonator); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>$user, 
+                            'portal'=>$portal,
+                            'res'=>$res,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'destroy';
+                    }
+                    
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed the Link ")
                 {
