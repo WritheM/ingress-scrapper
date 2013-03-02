@@ -9,7 +9,7 @@ if (isset($_GET['debug']))
 }
 else 
 {
-    $debug = false;
+    $debug = true;
 }
 
 require '../config/config.php';
@@ -446,6 +446,125 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                 {
                     // ignore this entry... who cares about my personal stuff? nobody!
                 } 
+                elseif ($v[2]['plext']['plextType'] == "PLAYER_GENERATED"
+                    && ((isset($v[2]['plext']['markup'][2][0])
+                    && $v[2]['plext']['markup'][2][0] == 'TEXT')
+                    || (isset($v[2]['plext']['markup'][1][0])
+                    && $v[2]['plext']['markup'][1][0] == 'TEXT')))
+                { // chat
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        if ($v[2]['plext']['markup'][1][0] == 'TEXT') 
+                        { // public
+                            $secure = false;
+                            $player = $v[2]['plext']['markup'][0][1];
+                            $text = $v[2]['plext']['markup'][1][1];
+                        }
+                        else
+                        { // secure
+                            $secure = true;
+                            $player = $v[2]['plext']['markup'][1][1];
+                            $text = $v[2]['plext']['markup'][2][1];
+                        }
+                    }
+                    
+                    { // create the temporary objects
+                        
+                        $chat = array(
+                            'guid'=>$guid,
+                            'datetime'=>(int)$datetime,
+                            'user'=>$player['guid'],
+                            'text'=>$text['plain'],
+                            'secure'=>$secure,
+                            'region'=>$region
+                        );
+                        
+                        $player['name'] = substr($player['plain'],0,-2);
+                        $player['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveChatObject($db, $chat);
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'datetime'=>(int)$datetime, 
+                            'user'=>$user, 
+                            'channel'=>($secure ? $user[0]['faction'] : "PUBLIC"),
+                            'text'=>$text,
+                            'region'=>$regionObject);
+                        $pingback_type = 'chat';
+                    }
+                }
+                elseif ($v[2]['plext']['markup'][1][1]['plain'] == " captured ")
+                { // capture a portal
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $player = $v[2]['plext']['markup'][0][1];
+                        $portal = $v[2]['plext']['markup'][2][1];
+                    }
+                    
+                    { // create the temporary objects
+                                                
+                        $capture = array(
+                            'guid'=>$guid,
+                            'user'=>$player['guid'],
+                            'portal'=>$portal['guid'],
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
+                        );
+                        
+                        $player['region'] = $region;
+                        
+                        $portal['latE6'] = (int)$portal['latE6'];
+                        $portal['lngE6'] = (int)$portal['lngE6'];
+                        $portal['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $portal);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveCaptureObject($db, $capture); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>$user, 
+                            'portal'=>$portal,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'capture';
+                    }
+
+                }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " deployed an ") 
                 { // deploy a resonator
                     { // parse the data
@@ -590,18 +709,6 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                       //console.log("hitting writhem api with : "+writhem_temp);
                       $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
                 }
-                elseif ($v[2]['plext']['markup'][1][1]['plain'] == " captured ")
-                {
-                /*  } else if (json[2].plext.markup[1][1].plain == " captured ") {
-                      pguid = json[2].plext.markup[0][1].guid;
-                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=captured";
-                      writhem_temp = writhem_temp + "&logid=" + json[0];
-                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
-                      writhem_temp = writhem_temp + "&user=" + pguid;
-                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[2][1].guid;
-                      //console.log("hitting writhem api with : "+writhem_temp);
-                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
-                }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed a Control Field @")
                 {
                 /*  } else if (json[2].plext.markup[1][1].plain == " destroyed a Control Field @") {
@@ -652,69 +759,6 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                       writhem_temp = writhem_temp + "&mod=" + json[2].plext.markup[2][1].plain;
                       //console.log("hitting writhem api with : "+writhem_temp);
                       $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
-                }
-                elseif ($v[2]['plext']['plextType'] == "PLAYER_GENERATED"
-                    && ((isset($v[2]['plext']['markup'][2][0])
-                    && $v[2]['plext']['markup'][2][0] == 'TEXT')
-                    || (isset($v[2]['plext']['markup'][1][0])
-                    && $v[2]['plext']['markup'][1][0] == 'TEXT')))
-                { // chat
-                    { // parse the data
-                        $guid = $v[0];
-                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
-                            $datetime = $v[1] / 1000; //convert it!
-                        else 
-                            $datetime = $v[1];
-                        if ($v[2]['plext']['markup'][1][0] == 'TEXT') 
-                        { // public
-                            $secure = false;
-                            $player = $v[2]['plext']['markup'][0][1];
-                            $text = $v[2]['plext']['markup'][1][1];
-                        }
-                        else
-                        { // secure
-                            $secure = true;
-                            $player = $v[2]['plext']['markup'][1][1];
-                            $text = $v[2]['plext']['markup'][2][1];
-                        }
-                    }
-                    
-                    { // create the temporary objects
-                        
-                        $chat = array(
-                            'guid'=>$guid,
-                            'datetime'=>(int)$datetime,
-                            'user'=>$player['guid'],
-                            'text'=>$text['plain'],
-                            'secure'=>$secure,
-                            'region'=>$region
-                        );
-                        
-                        $player['name'] = substr($player['plain'],0,-2);
-                        $player['region'] = $region;
-                    }
-                    
-                    { // save the objects
-                        $response = savePlayerObject($db, $player);
-                        //header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
-                        
-                        $response = saveChatObject($db, $chat);
-                        header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
-                    }
-                    
-                    { // build a pingback
-                        $user = getPlayerObject($db, null, $player['guid']);
-                        $regionObject = getRegionObject($db,$region);
-                        $pingback_object = array('guid'=>$guid, 
-                            'datetime'=>(int)$datetime, 
-                            'user'=>$user, 
-                            'channel'=>($secure ? $user[0]['faction'] : "PUBLIC"),
-                            'text'=>$text,
-                            'region'=>$regionObject);
-                        $pingback_type = 'chat';
-                    }
                 }
                 else 
                 { // this method is here just to catch new features as they are added to ingress/intel

@@ -94,89 +94,6 @@ ON DUPLICATE KEY UPDATE `name`=:name, `team`=:team, `region`=:region;";
         return $r;
     }
     
-    function saveChatObject(&$db, $chat)
-    {
-        $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
-        { // validate the object
-            if ((isset($chat) && is_array($chat))
-                && (isset($chat['guid']) && is_string($chat['guid']))
-                && (isset($chat['datetime']) && is_int($chat['datetime']))
-                && (isset($chat['user']) && is_string($chat['user']))
-                && (isset($chat['text']) && is_string($chat['text']))
-                && (isset($chat['secure']) && (is_bool($chat['secure']) || is_int($chat['secure'])))
-                && (isset($chat['region']) && is_int($chat['region']))
-                ) 
-            {
-                // pass, it's a valid object!
-                // now make sure its the style we need:
-                if ($chat['secure'] === true) $chat['secure'] = 1;
-                else $chat['secure'] = 0;
-                if ($chat['datetime'] > 4294967295) // maximum valid datetime in s, so it must be ms
-                    $chat['datetime'] = $chat['datetime'] / 1000; //convert it!
-            }
-            else
-            {
-                $r['class'] = 'fail_object';
-                $r['code'] = 500;
-                $r['detail'] = 'The provided ChatObject does not appear valid.';
-                $r['debug'] = $chat;
-            }
-        }
-        
-        { // build the query
-            $parms = array();
-            $query = "INSERT INTO `ingress`.`chat_log` (`guid`, `datetime`, `user`, `text`, `secure`, `region`) VALUES (:guid, :datetime, :user, :text, :secure, :region) 
-            ON DUPLICATE KEY UPDATE `secure`=:secure, `datetime`=:datetime, `region`=:region";
-            $parms[] = array(':guid',$chat['guid']);
-            $parms[] = array(':datetime',$chat['datetime']);
-            $parms[] = array(':user',$chat['user']);
-            $parms[] = array(':text',$chat['text']);
-            $parms[] = array(':secure',$chat['secure']);
-            $parms[] = array(':region',$chat['region']);
-                
-            $stmt = $db->prepare($query);
-            foreach($parms as $parm) {
-                $stmt->bindValue($parm[0], $parm[1]);    
-            }
-        }
-
-        { // execute the insert/update
-            try 
-            {
-                $stmt->execute();
-                ob_start();
-                    echo "chat :";
-                    print_r($chat);
-                    echo "parms :";
-                    print_r($parms);
-                    echo "stmt :";
-                    print_r($stmt);
-                $r['debug'] = ob_get_clean();
-                
-                if ($stmt->rowCount() > 0) 
-                {
-                    $r['class'] = 'success';
-                    $r['code'] = 201;
-                    $r['detail'] = 'chat log updated';
-                } 
-                else
-                {
-                    $r['class'] = 'warn_insert';
-                    $r['code'] = 206;
-                    $r['detail'] = 'chat log already exists.';
-                }
-            }
-            catch (PDOException $e)
-            {
-                $r['class'] = 'fail_query';
-                $r['code'] = 500;
-                $r['detail'] = $e->getMessage();
-            }
-        }
-        
-        return $r;
-    }
-    
     function savePortalObject(&$db, $portal)
     {
         $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
@@ -273,6 +190,169 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         return $r;
     }
     
+    function saveChatObject(&$db, $chat)
+    {
+        $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
+        { // validate the object
+            if ((isset($chat) && is_array($chat))
+                && (isset($chat['guid']) && is_string($chat['guid']))
+                && (isset($chat['datetime']) && is_int($chat['datetime']))
+                && (isset($chat['user']) && is_string($chat['user']))
+                && (isset($chat['text']) && is_string($chat['text']))
+                && (isset($chat['secure']) && (is_bool($chat['secure']) || is_int($chat['secure'])))
+                && (isset($chat['region']) && is_int($chat['region']))
+                ) 
+            {
+                // pass, it's a valid object!
+                // now make sure its the style we need:
+                if ($chat['secure'] === true) $chat['secure'] = 1;
+                else $chat['secure'] = 0;
+                if ($chat['datetime'] > 4294967295) // maximum valid datetime in s, so it must be ms
+                    $chat['datetime'] = $chat['datetime'] / 1000; //convert it!
+            }
+            else
+            {
+                $r['class'] = 'fail_object';
+                $r['code'] = 500;
+                $r['detail'] = 'The provided ChatObject does not appear valid.';
+                $r['debug'] = $chat;
+            }
+        }
+        
+        { // build the query
+            $parms = array();
+            $query = "INSERT INTO `ingress`.`chat_log` (`guid`, `datetime`, `user`, `text`, `secure`, `region`) VALUES (:guid, :datetime, :user, :text, :secure, :region) 
+            ON DUPLICATE KEY UPDATE `secure`=:secure, `datetime`=:datetime, `region`=:region";
+            $parms[] = array(':guid',$chat['guid']);
+            $parms[] = array(':datetime',$chat['datetime']);
+            $parms[] = array(':user',$chat['user']);
+            $parms[] = array(':text',$chat['text']);
+            $parms[] = array(':secure',$chat['secure']);
+            $parms[] = array(':region',$chat['region']);
+                
+            $stmt = $db->prepare($query);
+            foreach($parms as $parm) {
+                $stmt->bindValue($parm[0], $parm[1]);    
+            }
+        }
+
+        { // execute the insert/update
+            try 
+            {
+                $stmt->execute();
+                ob_start();
+                    echo "chat :";
+                    print_r($chat);
+                    echo "parms :";
+                    print_r($parms);
+                    echo "stmt :";
+                    print_r($stmt);
+                $r['debug'] = ob_get_clean();
+                
+                if ($stmt->rowCount() > 0) 
+                {
+                    $r['class'] = 'success';
+                    $r['code'] = 201;
+                    $r['detail'] = 'chat log updated';
+                } 
+                else
+                {
+                    $r['class'] = 'warn_insert';
+                    $r['code'] = 206;
+                    $r['detail'] = 'chat log already exists.';
+                }
+            }
+            catch (PDOException $e)
+            {
+                $r['class'] = 'fail_query';
+                $r['code'] = 500;
+                $r['detail'] = $e->getMessage();
+            }
+        }
+        
+        return $r;
+    }
+    
+    function saveCaptureObject(&$db, $capture)
+    {
+        $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
+        { // validate the object
+            if ((isset($capture) && is_array($capture))
+                && (isset($capture['guid']) && is_string($capture['guid']))
+                && (isset($capture['user']) && is_string($capture['user']))
+                && (isset($capture['portal']) && is_string($capture['portal']))
+                && (isset($capture['datetime']) && is_int($capture['datetime']))
+                && (isset($capture['region']) && is_int($capture['region']))
+                ) 
+            {
+                // pass, it's a valid object!
+                // now make sure its the style we need:
+                if ($capture['datetime'] >= 4294967295) // maximum valid datetime in s, so it must be ms... unless it really is the year 2136 already!?
+                    $capture['datetime'] = $capture['datetime'] / 1000; //convert it!
+            }
+            else
+            {
+                $r['class'] = 'fail_object';
+                $r['code'] = 500;
+                $r['detail'] = 'The provided CaptureObject does not appear valid.';
+                $r['debug'] = $capture;
+                return $r;
+            }
+        }
+        
+        { // build the query
+            $parms = array();
+            $query = sprintf("INSERT INTO `ingress`.`capture_log` (`guid`, `datetime`, `user`, `portal`, `region`) VALUES (:guid, :datetime, :user, :portal, :region) 
+            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;");
+            $parms[] = array(':guid',$capture['guid']);
+            $parms[] = array(':datetime',$capture['datetime']);
+            $parms[] = array(':user',$capture['user']);
+            $parms[] = array(':portal',$capture['portal']);
+            $parms[] = array(':region',$capture['region']);
+                
+            $stmt = $db->prepare($query);
+            foreach($parms as $parm) {
+                $stmt->bindValue($parm[0], $parm[1]);    
+            }
+        }
+
+        { // execute the insert/update
+            try 
+            {
+                $stmt->execute();
+                ob_start();
+                    echo "capture :";
+                    print_r($capture);
+                    echo "parms :";
+                    print_r($parms);
+                    echo "stmt :";
+                    print_r($stmt);
+                $r['debug'] = ob_get_clean();
+                
+                if ($stmt->rowCount() > 0) 
+                {
+                    $r['class'] = 'success';
+                    $r['code'] = 201;
+                    $r['detail'] = "capture log updated";
+                } 
+                else
+                {
+                    $r['class'] = 'warn_insert';
+                    $r['code'] = 206;
+                    $r['detail'] = "capture log already exists.";
+                }
+            }
+            catch (PDOException $e)
+            {
+                $r['class'] = 'fail_query';
+                $r['code'] = 500;
+                $r['detail'] = $e->getMessage();
+            }
+        }
+        
+        return $r;
+    }
+
     function saveResonatorObject(&$db, $action, $resonator)
     {
         $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
@@ -329,7 +409,7 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
             {
                 $stmt->execute();
                 ob_start();
-                    echo "chat :";
+                    echo "resonator  :";
                     print_r($resonator);
                     echo "parms :";
                     print_r($parms);
@@ -541,66 +621,6 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
             $pingback_type = $_GET['table'];
         }
     }*/
-    /*elseif ($_GET['table'] == 'captured') 
-    {
-        { // build the query
-            $parms = array();
-            $query = sprintf("INSERT INTO `ingress`.`capture_log` (`guid`, `datetime`, `user`, `portal`, `region`) VALUES (:logid, :datetime, :user, :portal, :region) 
-            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;");
-            $parms[] = array(':logid',$_GET['logid']);
-            $parms[] = array(':datetime',strtotime($_GET['ts']));
-            $parms[] = array(':user',$_GET['user']);
-            $parms[] = array(':portal',$_GET['portal']);
-            $parms[] = array(':region',$region);
-                
-            $stmt = $db->prepare($query);
-            foreach($parms as $parm) {
-                $stmt->bindValue($parm[0], $parm[1]);    
-            }
-        }
-        
-        { // execute the update
-            
-            try 
-            {
-                $stmt->execute();
-                if ($stmt->rowCount() > 0) 
-                {
-                    header(':', true, 201);
-                    echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                } 
-                else
-                {
-                    if ($debug)
-                    {
-                        print_r($parms);
-                        print_r($stmt);
-                    }                
-                    header(':', true, 206);
-                    echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                }
-            }
-            catch (PDOException $e)
-            {
-                header(':', true, 500);
-                printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                exit();
-            }
-        }
-    
-        { // build a pingback object
-            $user = getPlayerObject($db, null, $_GET['user']);
-            $portal = getPortalObject($db, $_GET['portal']);
-            $regionObject = getRegionObject($db,$region);
-            $pingback_object = array('guid'=>$_GET['logid'], 
-                'datetime'=>$_GET['ts'], 
-                'user'=>$user, 
-                'portal'=>$portal,
-                'region'=>$regionObject);
-            $pingback_type = $_GET['table'];
-        }
-    }
-    */
     /*elseif ($_GET['table'] == 'chat') 
     {
         { // build the query
@@ -1022,6 +1042,89 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         }
     }
 
+    function getCaptureObject(&$db, $portals=null, $datetime=null, $limit=null)
+    {
+      $controls = array();
+      { // build the query
+          $parms = array();
+          $query = "SELECT captureLog.guid, captureLog.user, captureLog.portal, captureLog.datetime 
+          FROM `capture_log` AS captureLog
+          WHERE 1=1";
+          if (isset($portals)) 
+          {
+              if (is_array($portals)) 
+              {
+                  $query .= "\nAND (captureLog.portal = :portal0";
+                  $parms[] = array(':portal0',$portals[0]);
+                  if (count($portals) > 1) 
+                  {
+                      for ($n = 1;$n < count($portals);$n++) 
+                      {
+                          $query .= "\nOR captureLog.portal = :portal{$n}";
+                          $parms[] = array(":portal{$n}",$portals[$n]);
+                      }
+                  }
+                  $query .= ")";
+              } 
+              else 
+              {
+                  $query .= "\nAND captureLog.portal = :portal";
+                  $parms[] = array(':portal',$portals);
+              }
+          } 
+          if (isset($datetime)) 
+          {
+              $query .= "\nAND captureLog.datetime <= :datetime";
+              $parms[] = array(':datetime',(int)$datetime);
+          }
+          $query .= "\nORDER BY datetime desc";
+          if (isset($limit) && $limit <= 20)
+          {
+              $query .= "\nLIMIT 0,:max";
+              $parms[] = array(':max',$limit);
+          }
+          else
+          {
+              $query .= "\nLIMIT 0,10";
+          }
+      }
+
+      { // set up the statement / execute
+          $stmt = $db->prepare($query);
+          foreach($parms as $parm) {
+              $stmt->bindValue($parm[0], $parm[1]);    
+          }
+          // print_r($stmt);
+          // print_r($parms);
+          try 
+          {
+              $stmt->execute();
+          } 
+          catch (PDOException $e)
+          {
+              return("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
+          }
+      }
+      
+      { // populate the object / return
+          if ($stmt->rowCount() > 0) 
+          {
+              while($row = $stmt->fetch()) {
+                  $resonator = array('guid'=>$row['guid'], 
+                      'user'=>getPlayerObject($db, null, $row['user']), 
+                      'portals'=>getPortalObject($db, $row['portal']), 
+                      'datetime'=>(int)$row['datetime']); 
+                  array_push ($controls, $resonator);
+              }
+              return $controls;
+          } 
+          else 
+          {
+              return false; //array('error'=>'no results', 'query'=>$query);
+          }
+      }
+    }
+    
     function getResonatorObject(&$db, $table, $portals=null, $datetime=null, $limit=null) 
     {
         if ($table != "destroy") $table = "deploy";
@@ -1102,92 +1205,6 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
                     array_push ($resonators, $resonator);
                 }
                 return $resonators;
-            } 
-            else 
-            {
-                return false; //array('error'=>'no results', 'query'=>$query);
-            }
-        }
-    }
-
-    function getModObject(&$db, $portals=null, $datetime=null, $limit=null) 
-    {
-        $mods = array();
-        { // build the query
-            $parms = array();
-            $query = "SELECT modLog.guid, modLog.user, modLog.portal, modLog.mod, modLog.datetime
-                FROM `pmoddestroy_log` AS modLog
-                WHERE 1=1"; 
-            
-            if (isset($portals)) 
-            {
-                if (is_array($portals)) 
-                {
-                    $query .= "\nAND (modLog.portal = :portal0";
-                    $parms[] = array(':portal0',$portals[0]);
-                    if (count($portals) > 1) 
-                    {
-                        for ($n = 1;$n < count($portals);$n++) 
-                        {
-                            $query .= "\nOR modLog.portal = :portal{$n}";
-                            $parms[] = array(":portal{$n}",$portals[$n]);
-                        }
-                    }
-                    $query .= ")";
-                } 
-                else 
-                {
-                    $query .= "\nAND modLog.portal = :portal";
-                    $parms[] = array(':portal',$portals);
-                }
-            } 
-
-            if (isset($datetime)) 
-            {
-                $query .= "\nAND modLog.datetime <= :datetime";
-                $parms[] = array(':datetime',(int)$datetime);
-            }
-            $query .= "\nORDER BY datetime desc";
-            if (isset($limit) && $limit <= 50)
-            {
-                $query .= "\nLIMIT 0,:max";
-                $parms[] = array(':max',$limit);
-            }
-            else
-            {
-                $query .= "\nLIMIT 0,50";
-            }
-        }
-        
-        { // set up the statement / execute
-            $stmt = $db->prepare($query);
-            foreach($parms as $parm) {
-                $stmt->bindValue($parm[0], $parm[1]);    
-            }
-            // print_r($stmt);
-            // print_r($parms);
-            try 
-            {
-                $stmt->execute();
-            } 
-            catch (PDOException $e)
-            {
-                return("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
-            }
-        }
-
-        { // populate the object / return
-            if ($stmt->rowCount() > 0) 
-            {
-                while($row = $stmt->fetch()) {
-                    $mod = array('guid'=>$row['guid'], 
-                        'user'=>getPlayerObject($db, null, $row['user']), 
-                        'portal'=>getPortalObject($db, $row['portal']), 
-                        'mod'=>$row['mod'],
-                        'datetime'=>(int)$row['datetime']); 
-                    array_push ($mods, $mod);
-                }
-                return $mods;
             } 
             else 
             {
@@ -1373,87 +1390,91 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         }
     }
 
-    function getCaptureObject(&$db, $portals=null, $datetime=null, $limit=null)
+    function getModObject(&$db, $portals=null, $datetime=null, $limit=null) 
     {
-      $controls = array();
-      { // build the query
-          $parms = array();
-          $query = "SELECT captureLog.guid, captureLog.user, captureLog.portal, captureLog.datetime 
-          FROM `capture_log` AS captureLog
-          WHERE 1=1";
-          if (isset($portals)) 
-          {
-              if (is_array($portals)) 
-              {
-                  $query .= "\nAND (captureLog.portal = :portal0";
-                  $parms[] = array(':portal0',$portals[0]);
-                  if (count($portals) > 1) 
-                  {
-                      for ($n = 1;$n < count($portals);$n++) 
-                      {
-                          $query .= "\nOR captureLog.portal = :portal{$n}";
-                          $parms[] = array(":portal{$n}",$portals[$n]);
-                      }
-                  }
-                  $query .= ")";
-              } 
-              else 
-              {
-                  $query .= "\nAND captureLog.portal = :portal";
-                  $parms[] = array(':portal',$portals);
-              }
-          } 
-          if (isset($datetime)) 
-          {
-              $query .= "\nAND captureLog.datetime <= :datetime";
-              $parms[] = array(':datetime',(int)$datetime);
-          }
-          $query .= "\nORDER BY datetime desc";
-          if (isset($limit) && $limit <= 20)
-          {
-              $query .= "\nLIMIT 0,:max";
-              $parms[] = array(':max',$limit);
-          }
-          else
-          {
-              $query .= "\nLIMIT 0,10";
-          }
-      }
+        $mods = array();
+        { // build the query
+            $parms = array();
+            $query = "SELECT modLog.guid, modLog.user, modLog.portal, modLog.mod, modLog.datetime
+                FROM `pmoddestroy_log` AS modLog
+                WHERE 1=1"; 
+            
+            if (isset($portals)) 
+            {
+                if (is_array($portals)) 
+                {
+                    $query .= "\nAND (modLog.portal = :portal0";
+                    $parms[] = array(':portal0',$portals[0]);
+                    if (count($portals) > 1) 
+                    {
+                        for ($n = 1;$n < count($portals);$n++) 
+                        {
+                            $query .= "\nOR modLog.portal = :portal{$n}";
+                            $parms[] = array(":portal{$n}",$portals[$n]);
+                        }
+                    }
+                    $query .= ")";
+                } 
+                else 
+                {
+                    $query .= "\nAND modLog.portal = :portal";
+                    $parms[] = array(':portal',$portals);
+                }
+            } 
 
-      { // set up the statement / execute
-          $stmt = $db->prepare($query);
-          foreach($parms as $parm) {
-              $stmt->bindValue($parm[0], $parm[1]);    
-          }
-          // print_r($stmt);
-          // print_r($parms);
-          try 
-          {
-              $stmt->execute();
-          } 
-          catch (PDOException $e)
-          {
-              return("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
-          }
-      }
-      
-      { // populate the object / return
-          if ($stmt->rowCount() > 0) 
-          {
-              while($row = $stmt->fetch()) {
-                  $resonator = array('guid'=>$row['guid'], 
-                      'user'=>getPlayerObject($db, null, $row['user']), 
-                      'portals'=>getPortalObject($db, $row['portal']), 
-                      'datetime'=>(int)$row['datetime']); 
-                  array_push ($controls, $resonator);
-              }
-              return $controls;
-          } 
-          else 
-          {
-              return false; //array('error'=>'no results', 'query'=>$query);
-          }
-      }
+            if (isset($datetime)) 
+            {
+                $query .= "\nAND modLog.datetime <= :datetime";
+                $parms[] = array(':datetime',(int)$datetime);
+            }
+            $query .= "\nORDER BY datetime desc";
+            if (isset($limit) && $limit <= 50)
+            {
+                $query .= "\nLIMIT 0,:max";
+                $parms[] = array(':max',$limit);
+            }
+            else
+            {
+                $query .= "\nLIMIT 0,50";
+            }
+        }
+        
+        { // set up the statement / execute
+            $stmt = $db->prepare($query);
+            foreach($parms as $parm) {
+                $stmt->bindValue($parm[0], $parm[1]);    
+            }
+            // print_r($stmt);
+            // print_r($parms);
+            try 
+            {
+                $stmt->execute();
+            } 
+            catch (PDOException $e)
+            {
+                return("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
+            }
+        }
+
+        { // populate the object / return
+            if ($stmt->rowCount() > 0) 
+            {
+                while($row = $stmt->fetch()) {
+                    $mod = array('guid'=>$row['guid'], 
+                        'user'=>getPlayerObject($db, null, $row['user']), 
+                        'portal'=>getPortalObject($db, $row['portal']), 
+                        'mod'=>$row['mod'],
+                        'datetime'=>(int)$row['datetime']); 
+                    array_push ($mods, $mod);
+                }
+                return $mods;
+            } 
+            else 
+            {
+                return false; //array('error'=>'no results', 'query'=>$query);
+            }
+        }
     }
+
 }
 ?>
