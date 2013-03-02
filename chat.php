@@ -47,7 +47,8 @@ else
       <button id="Edmonton" type="button" class="btn" onclick="toggleRegion(2);">Edmonton</button>
     </div>
     <div class="btn-group">
-        <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues">Enhancements? Issues?</a>
+        <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues">Suggestions/Issues</a>
+        <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues/milestones">Progress</a>
     </div>
     <p></p>
     <div id="loading" style="position:absolute;top:50px;right:50px;">

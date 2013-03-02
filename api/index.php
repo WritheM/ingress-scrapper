@@ -482,7 +482,6 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         $response = savePlayerObject($db, $player);
                         //header(':', true, $response['code']);
                         printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
-                        if ($response['class'] == 'fail_object') var_dump($response['debug']);
                         
                         $response = savePortalObject($db, $portal);
                         //header(':', true, $response['code']);
@@ -647,7 +646,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                             'region'=>$region
                         );
                         
-                        $player['name'] = $player['plain'];
+                        $player['name'] = substr($player['plain'],0,-2);
                         $player['region'] = $region;
                     }
                     

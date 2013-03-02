@@ -49,7 +49,7 @@
         { // build the query
             $parms = array();
             $query = "INSERT INTO `ingress`.`players` (`guid`, `name`, `team`, `region`) VALUES (:guid, :name, :team, :region)
-ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
+ON DUPLICATE KEY UPDATE `name`=:name, `team`=:team, `region`=:region;";
             $parms[] = array(':guid',$player['guid']);
             $parms[] = array(':name',$player['name']);
             $parms[] = array(':team',$player['team']);
