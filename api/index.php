@@ -684,17 +684,72 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                     
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed the Link ")
-                {
-                /*  } else if (json[2].plext.markup[1][1].plain == " destroyed the Link ") {
-                      pguid = json[2].plext.markup[0][1].guid;
-                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=break";
-                      writhem_temp = writhem_temp + "&logid=" + json[0];
-                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
-                      writhem_temp = writhem_temp + "&user=" + pguid;
-                      writhem_temp = writhem_temp + "&portal1=" + json[2].plext.markup[2][1].guid;
-                      writhem_temp = writhem_temp + "&portal2=" + json[2].plext.markup[4][1].guid;
-                      //console.log("hitting writhem api with : "+writhem_temp);
-                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                { // break a link between 2 portals
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $player = $v[2]['plext']['markup'][0][1];
+                        $portal_from = $v[2]['plext']['markup'][2][1];
+                        $portal_to = $v[2]['plext']['markup'][4][1];
+                    }
+                    
+                    { // create the temporary objects
+                                                
+                        $link = array(
+                            'guid'=>$guid,
+                            'user'=>$player['guid'],
+                            'portal1'=>$portal_from['guid'],
+                            'portal2'=>$portal_to['guid'],
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
+                        );
+                        
+                        $player['region'] = $region;
+                        
+                        $portal_from['latE6'] = (int)$portal_from['latE6'];
+                        $portal_from['lngE6'] = (int)$portal_from['lngE6'];
+                        $portal_from['region'] = $region;
+                        
+                        $portal_to['latE6'] = (int)$portal_to['latE6'];
+                        $portal_to['lngE6'] = (int)$portal_to['lngE6'];
+                        $portal_to['region'] = $region;
+                        
+                        $portals = array($portal_from, $portal_to);
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $portal_from);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $portal_to);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveLinkObject($db, 'break', $link); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>$user, 
+                            'portals'=>$portals,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'break';
+                    }
+                    
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " linked ")
                 { // linked 2 portals
