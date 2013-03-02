@@ -1053,6 +1053,7 @@
 <p>Here you find a list of resources that could be useful using this API:</p>
 
   <ul>
+    <li><a href="https://github.com/WritheM/ingress-scrapper">github:</a> That's right, we open sourced this whole project.</li>
     <li><a href="http://www.json.org/index.html">www.json.org:</a> A lot of implementations 
       of JSON in variable Languages.</li>
   </ul>

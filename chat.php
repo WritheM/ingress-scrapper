@@ -46,6 +46,9 @@ else
       <button id="Calgary" type="button" class="btn" onclick="toggleRegion(1);">Calgary</button>
       <button id="Edmonton" type="button" class="btn" onclick="toggleRegion(2);">Edmonton</button>
     </div>
+    <div class="btn-group">
+        <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues">Enhancements? Issues?</a>
+    </div>
     <p></p>
     <div id="loading" style="position:absolute;top:50px;right:50px;">
       <!-- Map Loading Spinner -->
@@ -87,6 +90,7 @@ top: 60px">
           <button id="status" type="button" class="btn btn-mini btn-inverse disabled">Loading...</button>
 
            &nbsp;&middot;&nbsp; Copyright &#169; 2013 &nbsp;&middot;&nbsp; <a href="http://writhem.com/">WritheM Web Solutions.</a>
+
   </div>
 
   <?
