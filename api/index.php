@@ -15,7 +15,9 @@ else
 require '../config/config.php';
 require 'objects.php';
 
-$region = (isset($_GET['region']) ? $_GET['region'] : 1);
+$region = (isset($_GET['region']) ? (int)$_GET['region'] : (int)1);
+$maint_mode = true;
+
 try {
     $conn = "mysql:host={$cfg['db']['host']};dbname={$cfg['db']['dbase']}";
     $db = new PDO($conn, $cfg['db']['user'], $cfg['db']['pass']);
@@ -413,7 +415,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
 
         $stmt->execute();
         while ($row = $stmt->fetch()) {
-            $region = $row['id'];
+            $region = (int)$row['id'];
         }
         
         if ($stmt->rowCount() > 0) 
@@ -445,7 +447,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                     // ignore this entry... who cares about my personal stuff? nobody!
                 } 
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " deployed an ") 
-                {
+                { // deploy a resonator
                 /*  } else if (json[2].plext.markup[1][1].plain == " deployed an ") {
                       pguid = json[2].plext.markup[0][1].guid;
                       var res = json[2].plext.markup[2][1].plain;
@@ -473,12 +475,16 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                     { // create the temporary objects
                                                 
                         $resonator = array(
-                            'guid'=>$player['guid'],
-                            'name'=>$player['plain'],
-                            'team'=>$player['team'],
-                            'region'=>$region
+                            'guid'=>$guid,
+                            'user'=>$player['guid'],
+                            'portal'=>$portal['guid'],
+                            'res'=>$res,
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
                         );
                         
+                        $portal['latE6'] = (int)$portal['latE6'];
+                        $portal['lngE6'] = (int)$portal['lngE6'];
                         $portal['region'] = $region;
                     }
                     
@@ -487,15 +493,27 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         //header(':', true, $response['code']);
                         printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                         
-                        $response = savePortalObject($db, $player);
+                        $response = savePortalObject($db, $portal);
                         //header(':', true, $response['code']);
                         printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                         
-                        // not built yet!
-                        // $response = saveResonatorObject($db, $resonator); 
-                        // header(':', true, $response['code']);
-                        // printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        $response = saveResonatorObject($db, 'deploy', $resonator); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                     }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>$user, 
+                            'portal'=>$portal,
+                            'res'=>$res,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'deploy';
+                    }
+
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed an ")
                 {
@@ -649,7 +667,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         
                         $response = saveChatObject($db, $chat);
                         header(':', true, $response['code']);
-                        printf("<div id=\"%s\">\n  <details=\"%s\" />%s\n</div>\n", $response['class'], $response['detail'], $response['debug']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
                     }
                     
                     { // build a pingback
@@ -661,7 +679,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                             'channel'=>($secure ? $user[0]['faction'] : "PUBLIC"),
                             'text'=>$text,
                             'region'=>$regionObject);
-                        //$pingback_type = 'chat';
+                        $pingback_type = 'chat';
                     }
                 }
                 else 
@@ -670,14 +688,14 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                     ob_start();
                     print_r($v);
                     $message .= ob_get_clean();
-                    //echo $message;
+                    echo $message;
                     // mail($cfg['site']['contact'], $cfg['site']['title'], $message);
 
                     //header(':', true, 501);
                     //printf("<div id=\"fail\">\n  <error details=\"unsupported intel ingress object for the save method\" />\n</div>\n");
                 }
                 
-                if ($pingback_object && $pingback_type) 
+                if ($pingback_object && $pingback_type && !$maint_mode) 
                 {
                     { // build the query... wow that was easy. ha!
                         $query = "SELECT url, region FROM `pingback`;";

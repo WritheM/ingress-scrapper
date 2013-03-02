@@ -1,6 +1,6 @@
 <?php
 
-{
+{ // save Objects. will validate and then save to the db, giving the status object in return.
     function savePlayerObject(&$db, $player)
     {
         $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
@@ -39,6 +39,7 @@
                 $r['code'] = 500;
                 $r['detail'] = 'The provided PlayerObject does not appear valid.';
                 $r['debug'] = $player;
+                return $r;
             }
         }
         
@@ -214,6 +215,7 @@ ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
                 $r['code'] = 500;
                 $r['detail'] = 'The provided PortalObject does not appear valid.';
                 $r['debug'] = $portal;
+                return $r;
             }
         }
         
@@ -221,13 +223,13 @@ ON DUPLICATE KEY UPDATE `name`=:name, team`=:team, `region`=:region;";
             $parms = array();
             $query = "INSERT INTO `ingress`.`portals` (`guid`, `address`, `latE6`, `lngE6`, `name`, `team`, `region`) VALUES (:guid, :address, :latE6, :lngE6, :name, :team, :region)
 ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
-            $parms[] = array(':guid',$_GET['guid']);
-            $parms[] = array(':address',$_GET['address']);
-            $parms[] = array(':latE6',$_GET['latE6']);
-            $parms[] = array(':lngE6',$_GET['lngE6']);
-            $parms[] = array(':name',$_GET['name']);
-            $parms[] = array(':team',$_GET['team']);
-            $parms[] = array(':region',(int)$region);
+            $parms[] = array(':guid',$portal['guid']);
+            $parms[] = array(':address',$portal['address']);
+            $parms[] = array(':latE6',$portal['latE6']);
+            $parms[] = array(':lngE6',$portal['lngE6']);
+            $parms[] = array(':name',$portal['name']);
+            $parms[] = array(':team',$portal['team']);
+            $parms[] = array(':region',$portal['region']);
                 
             $stmt = $db->prepare($query);
             foreach($parms as $parm) {
@@ -268,19 +270,50 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         return $r;
     }
     
-   /*elseif ($_GET['table'] == 'portal') 
+    function saveResonatorObject(&$db, $action, $resonator)
     {
+        $r = array('class'=>null,'code'=>null,'details'=>null,'debug'=>null);
+        { // validate the object
+            if ((isset($resonator) && is_array($resonator))
+                && (isset($resonator['guid']) && is_string($resonator['guid']))
+                && (isset($resonator['user']) && is_string($resonator['user']))
+                && (isset($resonator['portal']) && is_string($resonator['portal']))
+                && (isset($resonator['res']) && is_string($resonator['res']))
+                && (isset($resonator['datetime']) && is_int($resonator['datetime']))
+                && (isset($resonator['region']) && is_int($resonator['region']))
+                && (isset($action))
+                ) 
+            {
+                // pass, it's a valid object!
+                // now make sure its the style we need:
+                if ($resonator['datetime'] >= 4294967295) // maximum valid datetime in s, so it must be ms... unless it really is the year 2136 already!?
+                    $resonator['datetime'] = $resonator['datetime'] / 1000; //convert it!
+                
+                if ($action != 'deploy' 
+                    && $action != 'destroy') 
+                    $action = 'deploy';
+            }
+            else
+            {
+                $r['class'] = 'fail_object';
+                $r['code'] = 500;
+                $r['detail'] = 'The provided ResonatorObject does not appear valid.';
+                $r['debug'] = $resonator;
+                return $r;
+            }
+        }
+        
         { // build the query
             $parms = array();
-            $query = "INSERT INTO `ingress`.`portals` (`guid`, `address`, `latE6`, `lngE6`, `name`, `team`, `region`) VALUES (:guid, :address, :latE6, :lngE6, :name, :team, :region)
-ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
-            $parms[] = array(':guid',$_GET['guid']);
-            $parms[] = array(':address',$_GET['address']);
-            $parms[] = array(':latE6',$_GET['latE6']);
-            $parms[] = array(':lngE6',$_GET['lngE6']);
-            $parms[] = array(':name',$_GET['name']);
-            $parms[] = array(':team',$_GET['team']);
-            $parms[] = array(':region',(int)$region);
+            $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `res`, `region`) VALUES (:guid, :datetime, :user, :portal, :res, :region)
+            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `res`=:res, `region`=:region;",
+            $action);
+            $parms[] = array(':guid',$resonator['guid']);
+            $parms[] = array(':datetime',$resonator['datetime']);
+            $parms[] = array(':user',$resonator['user']);
+            $parms[] = array(':portal',$resonator['portal']);
+            $parms[] = array(':res',$resonator['res']);
+            $parms[] = array(':region',$resonator['region']);
                 
             $stmt = $db->prepare($query);
             foreach($parms as $parm) {
@@ -288,97 +321,43 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
             }
         }
 
-        { // execute the update
-            
+        { // execute the insert/update
             try 
             {
                 $stmt->execute();
+                ob_start();
+                    echo "chat :";
+                    print_r($resonator);
+                    echo "parms :";
+                    print_r($parms);
+                    echo "stmt :";
+                    print_r($stmt);
+                $r['debug'] = ob_get_clean();
+                
                 if ($stmt->rowCount() > 0) 
                 {
-                    header(':', true, 201);
-                    echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
+                    $r['class'] = 'success';
+                    $r['code'] = 201;
+                    $r['detail'] = "resonator:{$action}-log updated";
                 } 
                 else
                 {
-                    if ($debug)
-                    {
-                        print_r($parms);
-                        print_r($stmt);
-                    }                
-                    header(':', true, 206);
-                    echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
+                    $r['class'] = 'warn_insert';
+                    $r['code'] = 206;
+                    $r['detail'] = "resonator:{$action}-log already exists.";
                 }
             }
             catch (PDOException $e)
             {
-                header(':', true, 500);
-                printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                exit();
-            }
-        }
-    }*/
-    /*elseif ($_GET['table'] == 'deploy' || $_GET['table'] == 'destroy') 
-    {
-        { // build the query
-            $parms = array();
-            $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `res`, `region`) VALUES (:logid, :datetime, :user, :portal, :res, :region)
-            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `res`=:res, `region=:region;",
-            $_GET['table']);
-            $parms[] = array(':logid',$_GET['logid']);
-            $parms[] = array(':datetime',strtotime($_GET['ts']));
-            $parms[] = array(':user',$_GET['user']);
-            $parms[] = array(':portal',$_GET['portal']);
-            $parms[] = array(':res',$_GET['res']);
-            $parms[] = array(':region',$region);
-                
-            $stmt = $db->prepare($query);
-            foreach($parms as $parm) {
-                $stmt->bindValue($parm[0], $parm[1]);    
+                $r['class'] = 'fail_query';
+                $r['code'] = 500;
+                $r['detail'] = $e->getMessage();
             }
         }
         
-        { // execute the update
-            
-            try 
-            {
-                $stmt->execute();
-                if ($stmt->rowCount() > 0) 
-                {
-                    header(':', true, 201);
-                    echo "<div id=\"success\">\n  <success details=\"pmoddestroy log updated\" />\n</div>\n";
-                } 
-                else
-                {
-                    if ($debug)
-                    {
-                        print_r($parms);
-                        print_r($stmt);
-                    }                
-                    header(':', true, 206);
-                    echo "<div id=\"fail_insert\">\n  <error details=\"entry may already exist in its provided state.\" />\n</div>\n";
-                }
-            }
-            catch (PDOException $e)
-            {
-                header(':', true, 500);
-                printf("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
-                exit();
-            }
-        }
+        return $r;
+    }
     
-        { // build a pingback object
-            $user = getPlayerObject($db, null, $_GET['user']);
-            $portal = getPortalObject($db, $_GET['portal']);
-            $regionObject = getRegionObject($db,$region);
-            $pingback_object = array('guid'=>$_GET['logid'], 
-                'datetime'=>$_GET['ts'], 
-                'user'=>$user, 
-                'portal'=>$portal,
-                'res'=>$_GET['res'],
-                'region'=>$regionObject);
-            $pingback_type = $_GET['table'];
-        }
-    }*/
     /*elseif ($_GET['table'] == 'break' || $_GET['table'] == 'linked') 
     {
         { // build the query
