@@ -58,7 +58,7 @@
             <li><a href="#portal">portal</a></li>
             <li><a href="#deploydestroy">deploy / destroy</a></li>
             <li><a href="#linkedbreak">linked / break</a></li>
-			<li><a href="#decayed">decayed</a></li>
+			<li><a href="#linkdecay">linkdecay</a></li>
             <li><a href="#controlliberate">control / liberate</a></li>
             <li><a href="#captured">captured</a></li>
 			<li><a href="#chat">chat</a></li>
@@ -184,7 +184,7 @@
     <li><a href="#controlliberate">liberate</a> via query or save</li>
     <li><a href="#controlliberate">control</a> via query or save</li>
     <li><a href="#captured">captured</a> via query or save</li>
-    <li><a href="#decayed">decayed</a> via save</li>
+    <li><a href="#linkdecay">linkdecay</a> via query or save</li>
     <li><a href="#pmoddestroy">pmoddestroy</a> via query or save</li>
   </ul>
 
@@ -405,33 +405,10 @@
   <p>This will return an Array of <a href="#linkObject">Link Objects</a> that match your query or the last 10 results.</p>
 
   
-<a name="decayed"></a>
-<h3>decayed</h3>
+<a name="linkdecay"></a>
+<h3>linkdecay</h3>
   <p>Allows you to search for a particular instance of link decay..</p>
-  <p>No additional search paramaters are available yet.</p>
-  <!--<p>Additional arguments are as follows:</p>
-  <table cellpadding="0" cellspacing="1" border="0" style="width:100%" class="tableborder">
-    <tr> 
-      <th>Parameter</th>
-      <th>Description</th>
-      <th>Required</th>
-    </tr>
-    <tr> 
-      <td class="td">guid</td>
-      <td class="td">Default is 0 (Public), 1 (Resistance), or 2 (Enlightened)</td>
-      <td class="td">No</td>
-    </tr>
-    <tr> 
-      <td class="td">portal</td>
-      <td class="td">Will return the most recent events to happen before this timestamp.</td>
-      <td class="td">No</td>
-    </tr>
-    <tr> 
-      <td class="td">limit</td>
-      <td class="td">Can not be set more than 50, but can reduce the number of results returned.</td>
-      <td class="td">No</td>
-    </tr>
-  </table>-->
+  <p>This method extends the link and break functionality. The same arguments that are valid for any linkObject are valid for this.</p>
   <p>This will return an Array of <a href="#linkObject">Link Objects</a> that match your query or the last 50 results. The user will be null.</p>
 
 <a name="controlliberate"></a>

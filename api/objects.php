@@ -447,7 +447,6 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         { // validate the object
             if ((isset($link) && is_array($link))
                 && (isset($link['guid']) && is_string($link['guid']))
-                && (isset($link['user']) && is_string($link['user']))
                 && (isset($link['portal1']) && is_string($link['portal1']))
                 && (isset($link['portal2']) && is_string($link['portal2']))
                 && (isset($link['datetime']) && is_int($link['datetime']))
@@ -479,12 +478,21 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         
         { // build the query
             $parms = array();
-            $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal1`, `portal2`, `region`) VALUES (:guid, :datetime, :user, :portal1, :portal2, :region)
-            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
-            $action);
+            if (isset($link['user']))
+            { // for break or link
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal1`, `portal2`, `region`) VALUES (:guid, :datetime, :user, :portal1, :portal2, :region)
+                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                    $action);
+                $parms[] = array(':user',$link['user']);
+            }
+            else 
+            { // for decay (null users)
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `portal1`, `portal2`, `region`) VALUES (:guid, :datetime, :portal1, :portal2, :region)
+                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                    $action);
+            }
             $parms[] = array(':guid',$link['guid']);
             $parms[] = array(':datetime',$link['datetime']);
-            $parms[] = array(':user',$link['user']);
             $parms[] = array(':portal1',$link['portal1']);
             $parms[] = array(':portal2',$link['portal2']);
             $parms[] = array(':region',$link['region']);
@@ -1188,15 +1196,18 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
 
     function getLinkObject(&$db, $table, $portals=null, $datetime=null, $limit=null) 
     {
-        if ($table != "break") {
-            $table = "linked";
-        }
+        if ($table != 'linked' 
+        && $table != 'break'
+        && $table != 'linkdecay') 
+        $table = 'deploy';
+
         $links = array();
         { // build the query
             $parms = array();
-            $query = sprintf("SELECT linkLog.guid, linkLog.user, linkLog.portal1, linkLog.portal2, linkLog.datetime 
+            $userquery = ($table == 'linkdecay' ? 'null as user' : 'linkLog.user');
+            $query = sprintf("SELECT linkLog.guid, %s, linkLog.portal1, linkLog.portal2, linkLog.datetime 
                 FROM `%s_log` AS linkLog
-                WHERE 1=1", $table);
+                WHERE 1=1", $userquery, $table);
                 
             if (isset($portals)) 
             {
@@ -1260,7 +1271,7 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
             {
                 while($row = $stmt->fetch()) {
                     $link = array('guid'=>$row['guid'], 
-                        'user'=>getPlayerObject($db, null, $row['user']), 
+                        'user'=>($row['user'] != null ? getPlayerObject($db, null, $row['user']) : null), 
                         'portals'=>getPortalObject($db, array($row['portal1'],$row['portal2'])), 
                         'datetime'=>(int)$row['datetime']); 
                     array_push ($links, $link);
