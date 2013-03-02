@@ -7,7 +7,8 @@
         { // validate the object
             if ((isset($player) && is_array($player))
                 && (isset($player['guid']) && is_string($player['guid']))
-                && (isset($player['name']) && is_string($player['name']))
+                && ((isset($player['name']) && is_string($player['name']))
+                 || (isset($player['plain']) && is_string($player['plain'])))
                 && (isset($player['team']) && (is_int($player['team']) || is_string($player['team'])))
                 && (isset($player['region']) && is_int($player['region']))
                 ) 
@@ -32,6 +33,8 @@
                             break;
                     }
                 }
+                
+                if (!isset($player['name'])) $player['name'] = $player['plain'];
             }
             else
             {

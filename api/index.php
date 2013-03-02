@@ -448,18 +448,6 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                 } 
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " deployed an ") 
                 { // deploy a resonator
-                /*  } else if (json[2].plext.markup[1][1].plain == " deployed an ") {
-                      pguid = json[2].plext.markup[0][1].guid;
-                      var res = json[2].plext.markup[2][1].plain;
-                      var port = json[2].plext.markup[4][1].guid;
-                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=deploy";
-                      writhem_temp = writhem_temp + "&logid=" + json[0];
-                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
-                      writhem_temp = writhem_temp + "&user=" + pguid;
-                      writhem_temp = writhem_temp + "&res=" + res;
-                      writhem_temp = writhem_temp + "&portal=" + port;
-                      //console.log("hitting writhem api with : "+writhem_temp);
-                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp); */
                     { // parse the data
                         $guid = $v[0];
                         if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
@@ -483,6 +471,8 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                             'region'=>(int)$region
                         );
                         
+                        $player['region'] = $region;
+                        
                         $portal['latE6'] = (int)$portal['latE6'];
                         $portal['lngE6'] = (int)$portal['lngE6'];
                         $portal['region'] = $region;
@@ -492,6 +482,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                         $response = savePlayerObject($db, $player);
                         //header(':', true, $response['code']);
                         printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        if ($response['class'] == 'fail_object') var_dump($response['debug']);
                         
                         $response = savePortalObject($db, $portal);
                         //header(':', true, $response['code']);
