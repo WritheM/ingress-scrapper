@@ -891,16 +891,62 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " created a Control Field @")
                 {
-                /*  } else if (json[2].plext.markup[1][1].plain == " created a Control Field @") {
-                      pguid = json[2].plext.markup[0][1].guid;
-                      var writhem_temp = "key="+WRITHEMAPIKEY+"&method=save&table=control";
-                      writhem_temp = writhem_temp + "&logid=" + json[0];
-                      writhem_temp = writhem_temp + "&ts=" + new Date(json[1]).toJSON();
-                      writhem_temp = writhem_temp + "&user=" + pguid;
-                      writhem_temp = writhem_temp + "&portal=" + json[2].plext.markup[2][1].guid;
-                      writhem_temp = writhem_temp + "&mus=" + json[2].plext.markup[4][1].plain;
-                      //console.log("hitting writhem api with : "+writhem_temp);
-                      $('#writhem_logs').load(WRITHEMAPIURL,writhem_temp);*/
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $player = $v[2]['plext']['markup'][0][1];
+                        $portal = $v[2]['plext']['markup'][2][1];
+                        $mus = (int)$v[2]['plext']['markup'][4][1]['plain'];
+                    }
+                    
+                    { // create the temporary objects
+                                                
+                        $field = array(
+                            'guid'=>$guid,
+                            'user'=>$player['guid'],
+                            'portal'=>$portal['guid'],
+                            'mus'=>$mus,
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
+                        );
+                        
+                        $player['region'] = $region;
+                        
+                        $portal['latE6'] = (int)$portal['latE6'];
+                        $portal['lngE6'] = (int)$portal['lngE6'];
+                        $portal['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePlayerObject($db, $player);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = savePortalObject($db, $portal);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveControlFieldObject($db, 'control', $field); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $user = getPlayerObject($db, null, $player['guid']);
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>$user, 
+                            'portal'=>$portal,
+                            'mus'=>$mus,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'control';
+                    }
+
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " destroyed a ")
                 {
@@ -922,7 +968,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                     print_r($v);
                     $message .= ob_get_clean();
                     echo $message;
-                    // mail($cfg['site']['contact'], $cfg['site']['title'], $message);
+                    mail($cfg['site']['contact'], $cfg['site']['title'], $message);
 
                     //header(':', true, 501);
                     //printf("<div id=\"fail\">\n  <error details=\"unsupported intel ingress object for the save method\" />\n</div>\n");
