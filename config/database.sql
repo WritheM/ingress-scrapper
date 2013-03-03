@@ -17,36 +17,6 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `alerts`
---
-
-CREATE TABLE IF NOT EXISTS `alerts` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `haystack` varchar(20) NOT NULL,
-  `needle` varchar(255) NOT NULL,
-  `contact` varchar(255) NOT NULL,
-  `method` varchar(10) NOT NULL,
-  `region` int(10) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `alerts_log`
---
-
-CREATE TABLE IF NOT EXISTS `alerts_log` (
-  `id` int(10) NOT NULL AUTO_INCREMENT,
-  `alert` int(10) NOT NULL,
-  `guid` varchar(40) NOT NULL,
-  `datetime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=13789 ;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `api`
 --
 
@@ -129,10 +99,10 @@ CREATE TABLE IF NOT EXISTS `control_log` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `decay_log`
+-- Table structure for table `linkdecay_log`
 --
 
-CREATE TABLE IF NOT EXISTS `decay_log` (
+CREATE TABLE IF NOT EXISTS `linkdecay_log` (
   `guid` varchar(40) NOT NULL,
   `portal1` varchar(40) NOT NULL,
   `portal2` varchar(40) NOT NULL,
@@ -273,13 +243,6 @@ CREATE TABLE IF NOT EXISTS `pingback` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `url` (`url`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
-
---
--- Dumping data for table `pingback`
---
-
-INSERT INTO `pingback` (`id`, `url`, `region`) VALUES
-(1, 'http://ingress.writhem.com/pingback/', 1);
 
 -- --------------------------------------------------------
 
