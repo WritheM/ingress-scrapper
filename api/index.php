@@ -219,65 +219,6 @@ if (isset($_GET['key']) && isset($_GET['table']))
                echo json_encode($factions);
             }
         }
-        else if ($_GET['table'] == 'decayed') 
-        {
-            header(':', true, 501);
-        /*
-            $factions = array();
-            { // build the query
-                $parms = array();
-                $query = "SELECT teams.id, teams.name as faction, captured.totalMUs as capturedMU, liberated.totalMUs as liberatedMU
-                    FROM (
-                        SELECT players.team, sum(liberate_log.mus) as totalMUs FROM `liberate_log`
-                        LEFT JOIN players ON players.guid=liberate_log.user
-                        WHERE liberate_log.region = :regionid
-                        GROUP BY team) 
-                    AS liberated
-                    LEFT JOIN (
-                        SELECT players.team, sum(control_log.mus) as totalMUs FROM `control_log`
-                        LEFT JOIN players ON players.guid=control_log.user
-                        WHERE control_log.region = :regionid
-                        GROUP BY team) 
-                    AS captured ON liberated.team=captured.team
-                    LEFT JOIN teams ON teams.id=liberated.team";
-                $parms[] = array(':regionid',$region);
-                if (isset($_GET['faction']))
-                {
-                    $query .= "\nWHERE portalTable.id = :faction";
-                    $parms[] = array(':faction',$_GET['faction']);
-                }
-            }
-
-            { // set up the statement / execute
-                $stmt = $db->prepare($query);
-                foreach($parms as $parm) {
-                    $stmt->bindValue($parm[0], $parm[1]);    
-                }
-
-                try 
-                {
-                    $stmt->execute();
-                } 
-                catch (PDOException $e)
-                {
-                    return("<div id=\"fail_query\">\n  <error details=\"%s\" />\n</div>\n" % $e->getMessage());
-                }
-            }
-            
-            { // populate the object / return
-                while($row = $stmt->fetch()) {
-                    $faction = array('guid'=>$row['id'], 
-                        'name'=>$row['faction'], 
-                        'capturedMU'=>$row['capturedMU'], 
-                        'liberatedMU'=>$row['liberatedMU']);
-                    array_push ($factions, $faction);
-                }
-                $factions[0]['currentMU']=$factions[0]['capturedMU']-$factions[1]['liberatedMU']+40000;
-                $factions[1]['currentMU']=$factions[1]['capturedMU']-$factions[0]['liberatedMU']+40000;
-               echo json_encode($factions);
-            }
-            */
-        }
         else if ($_GET['table'] == 'chat') 
         {
             echo json_encode(getChatObject($db, 
