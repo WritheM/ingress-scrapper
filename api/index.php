@@ -890,7 +890,7 @@ else if (isset($_POST['key']) && isset($_POST['package']))
 
                 }
                 elseif ($v[2]['plext']['markup'][1][1]['plain'] == " created a Control Field @")
-                {
+                { // control an area by setting up a new control field.
                     { // parse the data
                         $guid = $v[0];
                         if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
@@ -945,6 +945,56 @@ else if (isset($_POST['key']) && isset($_POST['package']))
                             'datetime'=>(int)$datetime, 
                             'region'=>$regionObject);
                         $pingback_type = 'control';
+                    }
+
+                }
+                elseif ($v[2]['plext']['markup'][0][1]['plain'] == "Control Field @")
+                { // control an area by setting up a new control field.
+                    { // parse the data
+                        $guid = $v[0];
+                        if ($v[1] > 4294967295) // maximum valid datetime in s, so it must be ms
+                            $datetime = $v[1] / 1000; //convert it!
+                        else 
+                            $datetime = $v[1];
+                        
+                        $portal = $v[2]['plext']['markup'][1][1];
+                        $mus = (int)$v[2]['plext']['markup'][3][1]['plain'];
+                    }
+                    
+                    { // create the temporary objects
+                                                
+                        $field = array(
+                            'guid'=>$guid,
+                            'portal'=>$portal['guid'],
+                            'mus'=>$mus,
+                            'datetime'=>(int)$datetime,
+                            'region'=>(int)$region
+                        );
+                                                
+                        $portal['latE6'] = (int)$portal['latE6'];
+                        $portal['lngE6'] = (int)$portal['lngE6'];
+                        $portal['region'] = $region;
+                    }
+                    
+                    { // save the objects
+                        $response = savePortalObject($db, $portal);
+                        //header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                        
+                        $response = saveControlFieldObject($db, 'fielddecay', $field); 
+                        header(':', true, $response['code']);
+                        printf("<div id=\"%s\">\n  <details=\"%s\" />\n</div>\n", $response['class'], $response['detail']);
+                    }
+                    
+                    { // build a pingback
+                        $regionObject = getRegionObject($db,$region);
+                        $pingback_object = array('guid'=>$guid, 
+                            'user'=>null, 
+                            'portal'=>$portal,
+                            'mus'=>$mus,
+                            'datetime'=>(int)$datetime, 
+                            'region'=>$regionObject);
+                        $pingback_type = 'fielddecay';
                     }
 
                 }

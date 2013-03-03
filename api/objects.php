@@ -546,7 +546,6 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         { // validate the object
             if ((isset($field) && is_array($field))
                 && (isset($field['guid']) && is_string($field['guid']))
-                && (isset($field['user']) && is_string($field['user']))
                 && (isset($field['portal']) && is_string($field['portal']))
                 && (isset($field['mus']) && is_int($field['mus']))
                 && (isset($field['datetime']) && is_int($field['datetime']))
@@ -560,7 +559,8 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
                     $field['datetime'] = $field['datetime'] / 1000; //convert it!
                 
                 if ($action != 'control' 
-                    && $action != 'liberate') 
+                    && $action != 'liberate' 
+                    && $action != 'fielddecay') 
                     $action = 'control';
             }
             else
@@ -575,12 +575,21 @@ ON DUPLICATE KEY UPDATE `team`=:team, `region`=:region;";
         
         { // build the query
             $parms = array();
-            $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mus`, `region`) VALUES (:guid, :datetime, :user, :portal, :mus, :region)
-            ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
-            $action);
+            if (isset($link['user']))
+            { // for break or link
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `user`, `portal`, `mus`, `region`) VALUES (:guid, :datetime, :user, :portal, :mus, :region)
+                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                    $action);
+                $parms[] = array(':user',$link['user']);
+            }
+            else 
+            { // for decay (null users)
+                $query = sprintf("INSERT INTO `ingress`.`%s_log` (`guid`, `datetime`, `portal`, `mus`, `region`) VALUES (:guid, :datetime, :portal, :mus, :region)
+                    ON DUPLICATE KEY UPDATE `datetime`=:datetime, `region`=:region;",
+                    $action);
+            }
             $parms[] = array(':guid',$field['guid']);
             $parms[] = array(':datetime',$field['datetime']);
-            $parms[] = array(':user',$field['user']);
             $parms[] = array(':portal',$field['portal']);
             $parms[] = array(':mus',$field['mus']);
             $parms[] = array(':region',$field['region']);

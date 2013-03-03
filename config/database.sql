@@ -99,6 +99,22 @@ CREATE TABLE IF NOT EXISTS `control_log` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `fielddecay_log`
+--
+
+CREATE TABLE IF NOT EXISTS `fielddecay_log` (
+  `guid` varchar(40) NOT NULL,
+  `portal` varchar(40) NOT NULL,
+  `mus` int(11) DEFAULT '0',
+  `datetime` int(11) DEFAULT NULL,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `region` int(10) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`guid`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `linkdecay_log`
 --
 
