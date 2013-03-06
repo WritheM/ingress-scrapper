@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS `api` (
   `last_hit` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `region` int(10) NOT NULL DEFAULT '1',
   `name` varchar(255) DEFAULT NULL,
+  `email` text,
+  `password` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 

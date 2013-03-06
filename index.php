@@ -1,385 +1,283 @@
-<?php
-require 'config/config.php';
+<?php session_start();
+require 'config/config.php'; ?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="//code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <script type="text/javascript" src="/js/bootstrap.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Coda">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/css/misc.css">
+    <title><?php echo $cfg['site']['title']; ?></title>
 
-echo "<p>";
-mysql_connect($cfg['db']['host'], $cfg['db']['user'], $cfg['db']['pass'])
-  or die("<div id=\"fail_connect\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-mysql_select_db($cfg['db']['dbase'])
-  or die("<div id=\"fail_select_db\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
+  </head>
+  <body>
 
-if (isset($_GET['key'])) {
-    $query = sprintf("UPDATE `api` SET `hits` = `hits`+1 WHERE `api`.`key` = '%s';",
-            $_GET['key']);
-        $result = mysql_query($query)
-          or die("<div id=\"fail_key\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    if (mysql_affected_rows() < 1) {
-        die("<div id=\"fail_key\">\n  <error details=\"bad api key\" />\n</div>\n");
-    }
-} else {
-?>
-Unrecognized User, please provide your api-key below:
-<form name="form1" method="get">
-<input default="key" name="key" type="text" size=32>
-  <button text="go" type="submit">login</button> 
-</form>
-<p><a href="./api">API</a> &nbsp;&middot;&nbsp; Copyright &#169; 2013 &nbsp;&middot;&nbsp; <a href="http://writhem.com/">WritheM Web Solutions.</a></p>
 <?php
-die();
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header('location: /');
+}
+if (isset($_GET['clear']))
+    $_SESSION['fail'] = 0;
+    
+try {
+    $conn = "mysql:host={$cfg['db']['host']};dbname={$cfg['db']['dbase']}";
+    $db = new PDO($conn, $cfg['db']['user'], $cfg['db']['pass']);
+} catch (PDOException $e) {
+    printf("<div id=\"fail_connect\">\n  <error details=\"%s\" />\n</div>\n", $e->getMessage());
+    exit();
 }
 
-if (isset($_GET['player'])) {
-    echo "<table cellpadding=\"1\" border=\"1\">\n";
-  
-    $query = sprintf("SELECT * "
-       . "FROM ( "
-       . "  SELECT players.name, players.guid, teams.name AS faction, deploy_log.res AS highestDeployed "
-       . "  FROM players "
-       . "  LEFT JOIN deploy_log ON deploy_log.user = players.guid "
-       . "  INNER JOIN teams ON players.team = teams.id "
-       . "  WHERE players.name = '%s' "
-       . "  ORDER BY deploy_log.res DESC "
-       . ") AS rawr "
-       . "GROUP BY name ",
-       $_GET['player']);
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    if (is_resource($result) && mysql_num_rows($result) > 0) {
-        while($row = mysql_fetch_array($result)) {
-            echo "  <tr>\n    <td>Common Name</td>\n   <td>{$row['name']}</td>\n  </tr>\n";
-            echo "  <tr>\n    <td>guid</td>\n   <td>{$row['guid']}</td>\n  </tr>\n";
-            echo "  <tr>\n    <td>Faction</td>\n   <td>{$row['faction']}</td>\n  </tr>\n";
-            echo "  <tr>\n    <td>Highest Deployed Resonator</td>\n   <td>{$row['highestDeployed']}</td>\n  </tr>\n";
+if (false) {
+    if(isset($_SESSION['key']) && $_SESSION['key'] != null)
+        echo "sessionkey\n";
+    if(isset($_POST['key']) && $_POST['key'] != null)
+        echo "postkey\n";
+    if(isset($_POST['email']) && $_POST['email'] != null)
+        echo "email\n";
+    if(isset($_POST['password']) && $_POST['password'] != null)
+        echo "password\n";
+    if(isset($_POST['confirm']) && $_POST['confirm'] != null)
+        echo "confirm\n";
+    if(isset($_GET['afterlogin']) && $_GET['afterlogin'] != null)
+        echo "redirect\n";
+}
+    
+$form['key'] = (isset($_POST['key']) && $_POST['key'] != null ? $_POST['key'] : null);
+$form['email'] = (isset($_POST['email']) && $_POST['email'] != null ? $_POST['email'] : null);
+$form['password'] = (isset($_POST['password']) && $_POST['password'] != null ? $_POST['password'] : null);
+$form['confirm'] = (isset($_POST['confirm']) && $_POST['confirm'] != null ? $_POST['confirm'] : null);
+$form['redirect'] = (isset($_GET['afterlogin']) && $_GET['afterlogin'] != null ? $_GET['afterlogin'] : null);
+$user = array();
+dbHit($form, $user, $db);
+
+if ($user['key'] != null)
+{
+    $_SESSION['key'] = $user['key'];
+    echo "    <h3 class=\"offset1\">Welcome, {$user['name']}! </h3>\n";
+    echo "    <p class=\"offset2\">Please provide your new contact information below to change it</p>\n";
+}
+else 
+{
+    echo "    <h3 class=\"offset1\">A valid user account is required to proceed.</h3>\n";
+    echo "    <p class=\"offset2\">Please provide your API key to get started or Log in to continue.</p>\n";
+}
+
+if (isset($user['alert_msg']) && isset($user['alert_status']) && isset($user['alert_title'])) {
+    echo "    <div class=\"alert alert-{$user['alert_status']} span6 offset1\">\n";
+    echo "      <button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>\n";
+    echo "      <h4>{$user['alert_title']}</h4>\n";
+    echo "      {$user['alert_msg']}\n";
+    echo "    </div>\n";
+    echo "    <div class=\"clearfix\"></div>\n";
+}
+?>    
+<!-- COMMON CONTENT START -->
+    <form method="POST" class="form-horizontal offset1">
+      <div class="control-group" id="divKey">
+        <label class="control-label" for="inputKey">Key</label>
+        <div class="controls">
+          <input class="input-xlarge" type="text" id="inputKey" placeholder="API Key"<?echo ($user['key']!=null?'disabled value="'.$user['key'].'"':' name="key"')?>>
+        </div>
+      <div class="offset2"><br/>or</div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="email">Email</label>
+        <div class="controls">
+          <input type="email" name="email" id="email" placeholder="Email" value="<?=$user['email']?>">
+        </div>
+      </div>
+      <div class="control-group">
+        <label class="control-label" for="password">Password</label>
+        <div class="controls">
+          <input type="password" pattern="(?=.*\d)(?=.*[a-z])\w{5,15}" name="password" id="password" placeholder="Password" onchange="
+              this.setCustomValidity(this.validity.patternMismatch ? 'Invalid password format\nPassword must contain between 5 and 15 characters, including text and at least 1 number' : '');
+            ">
+        </div>
+      </div>
+      <?if ($user['key']!=null) {?>
+      <div class="control-group" id="confirm">
+        <label class="control-label" for="confirm">Password Again</label>
+        <div class="controls">
+          <input type="password" pattern="(?=.*\d)(?=.*[a-z])\w{5,15}" name="confirm" id="confirm" placeholder="Confirm It" onchange="
+              this.setCustomValidity(this.validity.patternMismatch ? 'Does not match\nPlease enter the same Password as above' : '');
+              if(this.checkValidity()) form.password.pattern = this.value;
+            ">
+        </div>
+      </div>
+      <?}?>
+      <div class="control-group">
+        <div class="controls btn-group">
+          <button type="submit" class="btn"><?=($user['key']==null?'Sign In':'Update')?></button>
+          <a class="btn<?if($user['key']==null) echo " disabled"?>" href="?logout">Sign Out</a>
+        </div>
+      </div>
+    </form>
+    
+    <div id="offline" style="position:absolute;top:50px;right:50px;display:none;">
+      <!-- Map Loading Spinner -->
+      <div class="img_outerwheel">
+        <div class="img_innerwheel">
+        </div>
+      </div>
+      <div id="map_spinner_text">
+        Upgrading System... 
+      </div>
+    </div>
+       
+    <?if ($user['key'] != null) { ?>
+    <div class="offset2">
+        <a class="btn btn-mini" href="chat.php<?=($user['key']!=null?"?key={$user['key']}":"")?>">
+            <i class="icon icon-comment"></i>
+            &nbsp;Chat Logs
+        </a>
+        <a class="btn btn-mini" href="/help/">
+            <i class="icon icon-briefcase"></i>
+            &nbsp;API Documentation
+        </a>
+        <a class="btn btn-mini" href="https://github.com/WritheM/ingress-scrapper/issues">
+            <i class="icon icon-warning-sign"></i>
+            &nbsp;Issues / Suggestions
+        </a>
+    </div>
+    <? } ?>
+<!-- END CONTENT -->
+  <div id="footer" style="
+                    width: 100%;
+                    bottom: 0px; z-order:-1">
+
+           <a href="./api">API</a>
+           &nbsp;&middot;&nbsp; Copyright &#169; 2013 &nbsp;&middot;&nbsp; <a href="http://writhem.com/">WritheM Web Solutions.</a>
+  </div>
+
+  <?
+  echo $cfg['analytics'];
+  ?>
+</body>
+</html>
+
+<?php
+// functions and junk
+
+// will process a login, or update of db then update the passed $user object for rendering.
+function dbHit($form, &$user, &$db) {
+    // make sure the user isn't locked out of db calls.
+    if (checkFail($user))
+        return false;
+        
+    if ($_SESSION['key'] != null && $form['email'] != null && $form['password'] != null && $form['confirm'] != null && $form['password'] === $form['confirm'])
+    { // change password and email then return, dont continue in this function.
+        if (dbHit(null, $user, $db)) 
+        { // the session appears valid, process the update
+            $stmt = $db->prepare("UPDATE `api` SET `email` = :email, `password` = md5(:password) WHERE `key` = :key");
+            $stmt->bindValue(':key',$_SESSION['key']);
+            $stmt->bindValue(':email',$form['email']);
+            $stmt->bindValue(':password',$form['password']);
+                        
+            if ($stmt->execute()) 
+            { // executed successfully
+                $user['key'] = $_SESSION['key'];
+                $user['name'] = $_SESSION['name'];
+                $user['email'] = $form['email'];
+                $user['password'] = true;
+                
+                $user['alert_status'] = "success";
+                $user['alert_title'] = "Awesome!";
+                $user['alert_msg'] = "Thank you for updating your account. We got your new details updated in the database.";
+
+                if (isset($form['redirect']) && $user['email'] != null && $user['password']) 
+                    header("location: {$form['redirect']}?key={$user['key']}");
+                
+                return true;
+            }
+            else 
+            { // should never happen, just additional error checking. db working?
+                $user['alert_status'] = "error";
+                $user['alert_title'] = "uhhh...";
+                $user['alert_msg'] = "well that's not supposed to happen... i had some trouble updating the db.";
+                
+                return false;
+            }
         }
-    } else {
-        die( "  <tr>\n    <td>player not found</td>\n  </tr>\n");
+        else
+        { // invalid session, dont update anything!
+            $user['alert_status'] = "error";
+            $user['alert_title'] = "uhhh...";
+            $user['alert_msg'] = "well that's not supposed to happen... seems we have an invaild session and i can't update anything.";
+            
+            return false;
+        }
+    }
+    else if (($form['key'] != null || $_SESSION['key'] != null) && $form['confirm'] == null) 
+    { // prepare for login via key, first by session then by form.
+        $stmt = $db->prepare("SELECT `key`, `name`, `email`, `password` FROM `api` WHERE `key` = :key;UPDATE `api` SET `hits` = `hits`+1 WHERE `key` = :key; ");
+        if (isset($_SESSION['key']))
+            $stmt->bindValue(':key',$_SESSION['key']);
+        elseif(isset($form['key']))
+            $stmt->bindValue(':key',$_POST['key']);
+    }
+    else if ($form['email'] != null && $form['email'] != null && $form['confirm'] == null) 
+    { // prepare for login via email/pass
+        $stmt = $db->prepare("SELECT `key`, `name`, `email`, `password` FROM `api` WHERE `email` = :email AND `password` = md5(:password);UPDATE `api` SET `hits` = `hits`+1 WHERE `email` = :email AND `password` = md5(:password); ");
+        $stmt->bindValue(':email',$form['email']);
+        $stmt->bindValue(':password',$form['password']);
     }
     
-    
-    $query = sprintf("SELECT highestDestroyed "
-       . "FROM ( "
-       . "  SELECT players.name, destroy_log.res AS highestDestroyed "
-       . "  FROM players "
-       . "  LEFT JOIN destroy_log ON destroy_log.user = players.guid "
-       . "  WHERE players.name = '%s' "
-       . "  ORDER BY destroy_log.res DESC "
-       . ") AS rawr "
-       . "GROUP BY name ",
-       $_GET['player']);
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n    <td>Highest Destroyed Resonator</td>\n   <td>{$row['highestDestroyed']}</td>\n  </tr>\n";
-    }
-    
-    
-    $query = sprintf("SELECT players.name, liberated.mus_freed, controlled.mus_enslaved
-       FROM players 
-       LEFT JOIN ( 
-         SELECT liberate_log.user, liberate_log.mus AS mus_freed
-         FROM liberate_log 
-         ORDER BY liberate_log.mus DESC 
-       ) AS liberated ON liberated.user= players.guid
-       LEFT JOIN ( 
-         SELECT control_log.user, control_log.mus AS mus_enslaved
-         FROM control_log
-         ORDER BY control_log.mus DESC 
-       ) AS controlled ON controlled.user= players.guid
-       WHERE players.name = '%s'
-       GROUP BY name ",
-            $_GET['player']);
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n    <td>Most MUs Captured at once</td>\n   <td>{$row['mus_enslaved']}</td>\n  </tr>\n";
-        echo "  <tr>\n    <td>Most MUs Freed at once</td>\n   <td>{$row['mus_freed']}</td>\n  </tr>\n";
-    }
-    
-    
-    $query = sprintf("SELECT players.name, captures.captures, breaks.breaks, links.linked
-       FROM players 
-       LEFT JOIN ( 
-         SELECT user, COUNT(guid) AS captures
-         FROM capture_log
-         GROUP BY user
-       ) AS captures ON captures.user= players.guid
-       LEFT JOIN ( 
-         SELECT user, COUNT(guid) AS breaks
-         FROM break_log
-         GROUP BY user
-       ) AS breaks ON breaks.user= players.guid
-       LEFT JOIN ( 
-         SELECT user, COUNT(guid) AS linked
-         FROM linked_log
-         GROUP BY user
-       ) AS links ON links.user= players.guid
-       WHERE players.name = '%s' 
-       GROUP BY name ",
-            $_GET['player']);
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n    <td>Portal Links Broken</td>\n   <td>{$row['breaks']}</td>\n  </tr>\n";
-        echo "  <tr>\n    <td>Portal Links Established</td>\n   <td>{$row['linked']}</td>\n  </tr>\n";
-        echo "  <tr>\n    <td>Portals Captured</td>\n   <td>{$row['captures']}</td>\n  </tr>\n";
-    }
+    if (isset($stmt)) 
+    { // process the prepared login
+        $stmt->execute();
+        if ($stmt->rowCount() > 0) 
+        { // user is valid, populate the $user object or redirect if required.
+            while ($row = $stmt->fetch()) 
+            { // there can be only 1...
+                $user['key'] = $row['key'];
+                $user['name'] = $row['name'];
+                $user['email'] = $row['email'];
+                $user['password'] = ($row['password'] != null ? true : false);
+            }
 
-
-    $query = sprintf("SELECT COUNT(chat_log.guid) as chatLines FROM chat_log
-            INNER JOIN players ON chat_log.user=players.guid
-            WHERE players.name = '%s'",
-            $_GET['player']);
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n    <td>Chat Lines</td>\n   <td>{$row['chatLines']}</td>\n  </tr>\n";
+            $_SESSION['key'] = $user['key'];
+            $_SESSION['name'] = $user['name'];
+            $_SESSION['fail'] = 0;
+            checkFail($user);
+            
+            // redirect if required, and user info is updated.
+            if (isset($form['redirect']) && $user['email'] != null && $user['password']) 
+                header("location: {$form['redirect']}?key={$user['key']}");
+            else 
+                return true;
+        } 
+        else
+        { // ha, that's not a valid user... break the $user, increase the fail counter, and warn the user
+            $user = null;
+            $_SESSION['fail']++;
+            checkFail($user);
+            return false;
+        }
     }
-    
-    
-    echo "  </tr>\n</table>";
-} else {
-    ?>
-    <table cellspacing="1" cellpadding="5">
-      <tr align=center>
-        <td colspan=2>Top 10 Players (by resonators deployed)</td>
-      </tr>
-      <tr align=center>
-        <td>RESISTANCE</td>
-        <td>ENLIGHTENED</td>
-      </tr>
-      <tr>
-        <td><table cellpadding="1" border="1">
-      <tr>
-        <td>Name</td>
-        <td>Highest</td>
-      </tr>
-    <?php
-    $query = sprintf("SELECT * "
-           . "FROM ( "
-           . "  SELECT players.name, teams.name AS faction, deploy_log.res AS highestDeployed "
-           . "  FROM players "
-           . "  LEFT JOIN deploy_log ON deploy_log.user = players.guid "
-           . "  INNER JOIN teams ON players.team = teams.id "
-           . "  WHERE teams.id = 1 "
-           . "  ORDER BY deploy_log.res DESC "
-           . ") AS rawr "
-           . "GROUP BY name "
-           . "ORDER BY highestDeployed DESC "
-           . "LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['highestDeployed']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-    </table></td>
-        <td><table cellpadding="1" border="1">
-      <tr>
-        <td>Name</td>
-        <td>Highest</td>
-      </tr>
-    <?php
-    $query = sprintf("SELECT * "
-           . "FROM ( "
-           . "  SELECT players.name, teams.name AS faction, deploy_log.res AS highestDeployed "
-           . "  FROM players "
-           . "  LEFT JOIN deploy_log ON deploy_log.user = players.guid "
-           . "  INNER JOIN teams ON players.team = teams.id "
-           . "  WHERE teams.id = 2 "
-           . "  ORDER BY deploy_log.res DESC "
-           . ") AS rawr "
-           . "GROUP BY name "
-           . "ORDER BY highestDeployed DESC "
-           . "LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['highestDeployed']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-    </table></td>
-      </tr>
-    </table>
-    
-<hr width=335 align=left>
-<table cellspacing="1" cellpadding="5">
-  <tr align=center> 
-    <td colspan=2>Top 10 Players (by resonators destroyed)</td>
-  </tr>
-  <tr align=center> 
-    <td>RESISTANCE</td>
-    <td>ENLIGHTENED</td>
-  </tr>
-  <tr> 
-    <td>
-      <table cellpadding="1" border="1">
-        <tr> 
-          <td>Name</td>
-          <td>Highest</td>
-        </tr>
-        <?php
-    $query = sprintf("SELECT * "
-           . "FROM ( "
-           . "  SELECT players.name, teams.name AS faction, destroy_log.res AS highestDestroyed "
-           . "  FROM players "
-           . "  LEFT JOIN destroy_log ON destroy_log.user = players.guid "
-           . "  INNER JOIN teams ON players.team = teams.id "
-           . "  WHERE teams.id = 1 "
-           . "  ORDER BY destroy_log.res DESC "
-           . ") AS rawr "
-           . "GROUP BY name "
-           . "ORDER BY highestDestroyed DESC "
-           . "LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['highestDestroyed']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-      </table>
-    </td>
-    <td>
-      <table cellpadding="1" border="1">
-        <tr> 
-          <td>Name</td>
-          <td>Highest</td>
-        </tr>
-        <?php
-    $query = sprintf("SELECT * "
-           . "FROM ( "
-           . "  SELECT players.name, teams.name AS faction, destroy_log.res AS highestDestroyed "
-           . "  FROM players "
-           . "  LEFT JOIN destroy_log ON destroy_log.user = players.guid "
-           . "  INNER JOIN teams ON players.team = teams.id "
-           . "  WHERE teams.id = 2 "
-           . "  ORDER BY destroy_log.res DESC "
-           . ") AS rawr "
-           . "GROUP BY name "
-           . "ORDER BY highestDestroyed DESC "
-           . "LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['highestDestroyed']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-      </table>
-    </td>
-  </tr>
-</table>
-<hr width=335 align=left>
-<table cellspacing="1" cellpadding="5">
-  <tr align=center> 
-    <td colspan=2>Top 10 Control Fields</td>
-  </tr>
-  <tr align=center> 
-    <td>Established</td>
-    <td>Destroyed</td>
-  </tr>
-  <tr> 
-    <td>
-      <table cellpadding="1" border="1">
-        <tr> 
-          <td>Name</td>
-          <td>Faction</td>
-          <td>MUs</td>
-        </tr>
-        <?php
-    $query = sprintf("SELECT players.name, teams.name as faction, control_log.mus FROM `control_log` 
-            LEFT JOIN `players` ON players.guid = control_log.user
-            LEFT JOIN `teams` ON players.team = teams.id
-            ORDER BY mus DESC
-            LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['faction']}</td>\n";
-        echo "    <td>{$row['mus']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-      </table>
-    </td>
-    <td>
-      <table cellpadding="1" border="1">
-        <tr>
-          <td>Name</td>
-          <td>Faction</td>
-          <td>MUs</td>
-        </tr>
-        <?php
-    $query = sprintf("SELECT players.name, teams.name as faction, liberate_log.mus FROM `liberate_log` 
-            LEFT JOIN `players` ON players.guid = liberate_log.user
-            LEFT JOIN `teams` ON players.team = teams.id
-            ORDER BY mus DESC
-            LIMIT 0,10");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-        echo "  <tr>\n";
-        echo "    <td><a href=\"?key={$_GET['key']}&player={$row['name']}\">{$row['name']}</a></td>\n";
-        echo "    <td>{$row['faction']}</td>\n";
-        echo "    <td>{$row['mus']}</td>\n";
-        echo "  </tr>\n";
-    }
-    ?>
-      </table>
-    </td>
-  </tr>
-</table>
-<hr width=335 align=left>
-    <table border=1 cellspacing="1" cellpadding="5">
-      <tr align=center>
-        <td colspan=3>Stats</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td>Resistance </td>
-        <td>Enlightened</td>
-      </tr>
-      <tr>
-        <td>Players</td>
-    <?php
-    $query = sprintf("SELECT COUNT(players.guid) as playerCount, teams.name as faction FROM players
-        LEFT JOIN teams ON players.team=teams.id
-        GROUP BY team");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-         echo "   <td>{$row['playerCount']}</td>\n";
-    }
-    ?>
-      </tr>
-      <tr>
-        <td>Portals</td>
-    <?php
-    $query = sprintf("SELECT COUNT(portals.guid) as portalCount, teams.name as faction FROM portals
-        LEFT JOIN teams ON portals.team=teams.id
-        GROUP BY team");
-    $result = mysql_query($query)
-      or die("<div id=\"fail_query\">\n  <error details=\"".mysql_error()."\" />\n</div>\n");
-    while($row = mysql_fetch_array($result)) {
-         echo "   <td>{$row['portalCount']}</td>\n";
-    }
-    ?>
-      </tr>
-    </table>
-    <?
+    return false;
 }
-echo "</p><p><a href=\"./api\">API</a> &nbsp;&middot;&nbsp; Copyright &#169; 2013 &nbsp;&middot;&nbsp; <a href=\"http://writhem.com/\">WritheM Web Solutions.</a></p>
-";
-echo $cfg['analytics'];
+
+function checkFail(&$user) {
+    if ($_SESSION['fail'] >= 5)
+    {
+        $user['alert_status'] = "error";
+        $user['alert_title'] = "Error";
+        $user['alert_msg'] = "Your account is currently locked. To request an unlock, you can wait 30 minutes or email admin at writhem dot com";
+        return true;
+    } 
+    elseif ($_SESSION['fail'] > 0) 
+    {
+        $user['alert_status'] = "alert";
+        $user['alert_title'] = "Warning";
+        $user['alert_msg'] = "Incorrect Login attempt {$_SESSION['fail']} of 5. You will be unable to login after you have exceeded login attempts.";
+    }
+    else
+    {
+        $user['alert_status'] = null;
+    }
+        
+    return false;
+}
 ?>

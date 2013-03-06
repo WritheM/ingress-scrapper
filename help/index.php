@@ -104,7 +104,7 @@
     </tr>
     <tr> 
       <td class="td"><strong>key</strong></td>
-      <td class="td">Your API-Key you received from wm.</td>
+      <td class="td">Your API-Key you received from writhem.</td>
       <td class="td">Yes</td>
     </tr>
     <tr> 

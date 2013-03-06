@@ -1,3 +1,6 @@
+<?php
+require 'config/config.php';
+?>
 <!DOCTYPE html>
 <html>
   <head>
@@ -7,10 +10,8 @@
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Coda">
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="/css/misc.css">
-    <title>Chat logs for the WritheM Ingress scrapper</title>
-<?php
-require 'config/config.php';
-
+<?
+echo "    <title>{$cfg['site']['title']} - Chat Logs</title>\n";
 if (isset($_GET['key']))
 {
     $key = $_GET['key'];
@@ -20,18 +21,7 @@ if (isset($_GET['key']))
 } 
 else 
 {
-    ?>
-  </head>
-  <body>
-  
-    Unrecognized User, please login with your api-key below:
-    <form name="form1" method="get">
-    <input default="key" name="key" type="text" size=32>
-      <button text="go" type="submit">login</button> 
-    </form>
-    <p><a href="./api">API</a> &nbsp;&middot;&nbsp; Copyright &#169; 2013 &nbsp;&middot;&nbsp; <a href="http://writhem.com/">WritheM Web Solutions.</a></p>
-    <?php
-    die();
+    header("location: /?afterlogin={$_SERVER['PHP_SELF']}");
 }
 ?>
   </head>
@@ -48,7 +38,8 @@ else
     </div>
     <div class="btn-group">
         <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues">Suggestions/Issues</a>
-        <a class="btn btn-mini" target="_blank" href="https://github.com/WritheM/ingress-scrapper/issues/milestones">Progress</a>
+        <a class="btn btn-mini" href="/">Account</a>
+        <a class="btn btn-mini" href="/?logout">Logout</a>
     </div>
     <p></p>
     <div id="loading" style="position:absolute;top:50px;right:50px;">
